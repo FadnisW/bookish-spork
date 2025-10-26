@@ -2,11 +2,9 @@ import FormModal from "@/components/formModal";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
-import { role, studentsData } from "@/lib/data";
+import { role } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent } from "react";
 import prisma from "@/lib/prisma";
 import { Class, Prisma, Student } from "@prisma/client";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
@@ -40,11 +38,16 @@ const columns = [
     accessor: "address",
     className: "hidden lg:table-cell",
   },
-  {
-    header: "Actions",
-    accessor: "action",
-  },
-];
+    ...(role === "admin"
+      ? [
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
+
 const renderRow = (item: StudentList) => (
     <tr
       key={item.id}

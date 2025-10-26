@@ -1,6 +1,10 @@
 import React from 'react'
 import Image from 'next/image'
-const Navbar = () => {
+import { currentUser } from '@clerk/nextjs/server';
+import { UserButton } from '@clerk/nextjs';
+const Navbar = async () => {
+
+   const user = await currentUser();
   return (
     <div className='flex items-center justify-between p-4'>
         {/* Search Bar */}
@@ -19,9 +23,10 @@ const Navbar = () => {
             </div>
             <div className='flex flex-col'>
                 <span className='text-xs leading-3 font-medium'>John Doe</span>
-                <span className='text-[10px] text-right text-gray-500'>Admin</span>
+                <span className='text-[10px] text-right text-gray-500'>{user?.publicMetadata?.role as string}</span>
             </div>
-                <Image src='/profile.png' alt='profile' width={36} height={36} className='rounded-full cursor-pointer'/>
+            <UserButton  />
+                {/* <Image src='/profile.png' alt='profile' width={36} height={36} className='rounded-full cursor-pointer'/> */}
             </div>
     </div>
   )

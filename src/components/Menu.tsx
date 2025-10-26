@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { currentUser } from "@clerk/nextjs/server";
 
 const menuItems = [
   {
@@ -116,24 +117,56 @@ const menuItems = [
   },
 ];
 
-const Menu = () => {
+const Menu = async () => {
+   const user = await currentUser();
+  const role = user?.publicMetadata.role as string;
   return (
-    <div className="mt-4 text-sm h-[calc(100vh-90px)] overflow-y-auto pr-1">
-      {menuItems.map((i)=>(
-        <div className="flex flex-col gap-1 mb-6" key={i.title}>
-          <span className="hidden lg:block text-gray-400 px-2 mb-2">{i.title}</span>
-          {i.items.map((item)=>(
-            <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 py-3 px-2 md:py-2 text-gray-600 hover:bg-gray-100 md:px-2 rounded-md hover:bg-lamaSkyLight">
-              <div className="min-w-[24px] flex justify-center">
-                <Image src={item.icon} alt={item.label} width={24} height={24} className="w-6 h-6 md:w-5 md:h-5 lg:w-5 lg:h-5" />
-              </div>
-              <span className="hidden lg:block">{item.label}</span>
-            </Link>
-          ))
-          }
+    <div className="mt-4 text-sm">
+      {menuItems.map((i) => (
+        <div className="flex flex-col gap-2" key={i.title}>
+          <span className="hidden lg:block text-gray-400 font-light my-4">
+            {i.title}
+          </span>
+          {i.items.map((item) => {
+            if (item.visible.includes(role)) {
+              return (
+                <Link
+                  href={item.href}
+                  key={item.label}
+                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight"
+                >
+                  <Image src={item.icon} alt="" width={20} height={20} />
+                  <span className="hidden lg:block">{item.label}</span>
+                </Link>
+              );
+            }
+          })}
         </div>
       ))}
     </div>
   );
 };
 export default Menu;
+
+//   const user = await currentUser()
+//   const role = user?.publicMetadata.role as string;
+
+//   return (
+//     <div className="mt-4 text-sm h-[calc(100vh-90px)] overflow-y-auto pr-1">
+//       {menuItems.map((i)=>(
+//         <div className="flex flex-col gap-1 mb-6" key={i.title}>
+//           <span className="hidden lg:block text-gray-400 px-2 mb-2">{i.title}</span>
+//           {i.items.map((item)=>(
+//             <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 py-3 px-2 md:py-2 text-gray-600 hover:bg-gray-100 md:px-2 rounded-md hover:bg-lamaSkyLight">
+//               <div className="min-w-[24px] flex justify-center">
+//                 <Image src={item.icon} alt={item.label} width={24} height={24} className="w-6 h-6 md:w-5 md:h-5 lg:w-5 lg:h-5" />
+//               </div>
+//               <span className="hidden lg:block">{item.label}</span>
+//             </Link>
+//           ))
+//           }
+//         </div>
+//       ))}
+//     </div>
+//   );
+// };
