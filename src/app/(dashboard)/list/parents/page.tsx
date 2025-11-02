@@ -2,7 +2,7 @@ import FormModal from "@/components/formModal";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
-import { parentsData, role } from "@/lib/data";
+import { role } from "@/lib/utils";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import {Parent, Student, Prisma } from "@prisma/client";

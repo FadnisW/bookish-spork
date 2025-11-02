@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="300" height="300">
+  <!-- Background elements -->
+  <rect x="0" y="0" width="800" height="600" fill="#F1F0FF" opacity="0.3" />
+  
+  <!-- School building -->
+  <rect x="200" y="200" width="400" height="300" fill="#EDF9FD" stroke="#C3EBFA" stroke-width="4" />
+  <rect x="350" y="400" width="100" height="100" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  <rect x="380" y="430" width="40" height="70" fill="#FEFCE8" stroke="#FAE27C" stroke-width="2" />
+  
+  <!-- Roof -->
+  <polygon points="200,200 400,100 600,200" fill="#CFCEFF" stroke="#C3EBFA" stroke-width="3" />
+  
+  <!-- Windows -->
+  <rect x="250" y="250" width="60" height="60" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  <rect x="350" y="250" width="60" height="60" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  <rect x="450" y="250" width="60" height="60" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  
+  <rect x="250" y="350" width="60" height="60" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  <rect x="450" y="350" width="60" height="60" fill="#FFFFFF" stroke="#C3EBFA" stroke-width="2" />
+  
+  <!-- Books -->
+  <rect x="100" y="400" width="60" height="80" fill="#FEFCE8" stroke="#FAE27C" stroke-width="2" transform="rotate(-10,100,400)" />
+  <rect x="110" y="390" width="60" height="80" fill="#F1F0FF" stroke="#CFCEFF" stroke-width="2" transform="rotate(-5,110,390)" />
+  <rect x="120" y="380" width="60" height="80" fill="#EDF9FD" stroke="#C3EBFA" stroke-width="2" />
+  
+  <!-- Flag -->
+  <line x1="600" y1="100" x2="600" y2="200" stroke="#555555" stroke-width="3" />
+  <polygon points="600,100 650,115 600,130" fill="#FAE27C" />
+  
+  <!-- Sun -->
+  <circle cx="700" cy="100" r="50" fill="#FEFCE8" />
+  <circle cx="700" cy="100" r="40" fill="#FAE27C" />
+</svg>
