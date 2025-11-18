@@ -2,6 +2,22 @@
 
 export let role = "admin";
 
+export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+
+export type AttendanceRecord = {
+  id: number;
+  date: string;
+  studentName: string;
+  studentId: string;
+  class: string;
+  lesson: string;
+  status: AttendanceStatus;
+  markedBy: string;
+  markedAt: string;
+  remark?: string;
+};
+
+
 export const teachersData = [
   {
     id: 1,
@@ -1057,3 +1073,106 @@ export const calendarEvents = [
     end: new Date(2025, 9, 18, 14, 45),
   },
 ];
+
+// TEMPORARY DATA
+export const attendanceData: AttendanceRecord[] = [
+  {
+    id: 1,
+    date: "2025-01-15",
+    studentName: "John Doe",
+    studentId: "1234567890",
+    class: "5A",
+    lesson: "Mathematics",
+    status: "PRESENT",
+    markedBy: "Jane Smith",
+    markedAt: "08:30 AM",
+  },
+  {
+    id: 2,
+    date: "2025-01-15",
+    studentName: "Jane Doe",
+    studentId: "1234567891",
+    class: "5A",
+    lesson: "Mathematics",
+    status: "ABSENT",
+    markedBy: "Jane Smith",
+    markedAt: "08:30 AM",
+  },
+  {
+    id: 3,
+    date: "2025-01-15",
+    studentName: "Mike Geller",
+    studentId: "1234567892",
+    class: "5A",
+    lesson: "English",
+    status: "LATE",
+    markedBy: "John Teacher",
+    markedAt: "09:15 AM",
+  },
+  {
+    id: 4,
+    date: "2025-01-15",
+    studentName: "Jay French",
+    studentId: "1234567893",
+    class: "5A",
+    lesson: "Science",
+    status: "EXCUSED",
+    markedBy: "Mary Brown",
+    markedAt: "10:00 AM",
+  },
+  {
+    id: 5,
+    date: "2025-01-14",
+    studentName: "Jane Smith",
+    studentId: "1234567894",
+    class: "5A",
+    lesson: "History",
+    status: "PRESENT",
+    markedBy: "Jane Smith",
+    markedAt: "11:30 AM",
+  },
+  {
+    id: 6,
+    date: "2025-01-14",
+    studentName: "Anna Santiago",
+    studentId: "1234567895",
+    class: "5A",
+    lesson: "Physics",
+    status: "PRESENT",
+    markedBy: "Robert Lee",
+    markedAt: "02:00 PM",
+  },
+  {
+    id: 7,
+    date: "2025-01-14",
+    studentName: "Allen Black",
+    studentId: "1234567896",
+    class: "5A",
+    lesson: "Mathematics",
+    status: "LATE",
+    markedBy: "Jane Smith",
+    markedAt: "08:45 AM",
+  },
+  {
+    id: 8,
+    date: "2025-01-13",
+    studentName: "Ophelia Castro",
+    studentId: "1234567897",
+    class: "5A",
+    lesson: "English",
+    status: "ABSENT",
+    markedBy: "John Teacher",
+    markedAt: "09:00 AM",
+  },
+];
+
+//previous schema for attendance
+// model Attendance {
+//   id        Int      @id @default(autoincrement())
+//   date      DateTime
+//   present   Boolean
+//   studentId String
+//   lessonId  Int
+//   lesson    Lesson   @relation(fields: [lessonId], references: [id])
+//   student   Student  @relation(fields: [studentId], references: [id])
+// }

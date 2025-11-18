@@ -1,9 +1,8 @@
-import React from 'react'
 import Image from "next/image";
 import AttendanceChart from './attendanceChart'
 import prisma from '@/lib/prisma';
 
-const attendanceChartContainer = async () => {
+const AttendanceChartContainer = async () => {
      const today = new Date();
   const dayOfWeek = today.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -57,7 +56,6 @@ const attendanceChartContainer = async () => {
   }));
   console.log(data)
   return (
-    <div>
       <div className="bg-white rounded-lg p-4 h-full">
       <div className="flex justify-between items-center">
         <h1 className="text-lg font-semibold">Attendance</h1>
@@ -65,8 +63,8 @@ const attendanceChartContainer = async () => {
       </div>
       <AttendanceChart data={data} />
     </div>
-    </div>
   )
 }
 
-export default attendanceChartContainer
+export default AttendanceChartContainer
+

@@ -164,17 +164,19 @@ async function main() {
     });
   }
 
-  // ATTENDANCE
   for (let i = 1; i <= 10; i++) {
-    await prisma.attendance.create({
-      data: {
-        date: new Date(), 
-        present: true, 
-        studentId: `student${i}`, 
-        lessonId: (i % 30) + 1, 
-      },
-    });
-  }
+  const lessonId = (i % 30) + 1;
+  await prisma.attendance.create({
+    data: {
+      date: new Date(), 
+      present: true, 
+      studentId: `student${i}`, 
+      lessonId: lessonId,
+      teacherId: `teacher${((lessonId - 1) % 15) + 1}`, // ← Add this - matches lesson's teacher
+      markedBy: "system", // ← Add this
+    },
+  });
+}
 
   // EVENT
   for (let i = 1; i <= 5; i++) {
