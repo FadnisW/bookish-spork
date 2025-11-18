@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
+import { deleteSubject } from '@/lib/actions';
 
 // USE LAZY LOADING
 
@@ -12,14 +13,24 @@ const TeacherForm = dynamic(() => import("./forms/teacherForm"), {
 const StudentForm = dynamic(() => import("./forms/studentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
-
+const SubjectForm = dynamic(() => import("./forms/subjectForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+  [key: string]: (
+    type: "create" | "update",
+    data?: any,
+    setOpen?: React.Dispatch<React.SetStateAction<boolean>>,
+    relatedData?: any
+  ) => JSX.Element;
 } = {
-  teacher: (type, data) => <TeacherForm type={type} data={data} />,
+  teacher: (type, data,) => <TeacherForm type={type} data={data} />,
   student: (type, data) => <StudentForm type={type} data={data} />,
   parent: (type, data) => <div>Parent form not implemented yet</div>,
-  subject: (type, data) => <div>Subject form not implemented yet</div>,
+  subject: (type, data, setOpen, relatedData) => (
+    // Always provide setOpen and a fallback empty object for relatedData
+    <SubjectForm type={type} data={data} setOpen={setOpen!} relatedData={relatedData || {teachers: []}} />
+  ),
   class: (type, data) => <div>Class form not implemented yet</div>,
   lesson: (type, data) => <div>Lesson form not implemented yet</div>,
   exam: (type, data) => <div>Exam form not implemented yet</div>,
@@ -35,6 +46,7 @@ const FormModal = ({
   type,
   data,
   id,
+  relatedData
 }: {
   table:
     | "teacher"
@@ -52,6 +64,7 @@ const FormModal = ({
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
+  relatedData?: any;
 }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -65,7 +78,8 @@ const FormModal = ({
 
   const Form = () => {
     return type === "delete" && id ? (
-      <form action="" className="p-4 flex flex-col gap-4">
+      <form action={deleteSubject} className="p-4 flex flex-col gap-4">
+        <input type="hidden" name="id" value={id} />
         <span className="text-center font-medium">
           All data will be lost. Are you sure you want to delete this {table}?
         </span>
@@ -74,7 +88,7 @@ const FormModal = ({
         </button>
       </form>
     ) : type === "create" || type === "update" ? (
-      forms[table] ? forms[table](type, data) : <div className="p-4 text-center">Form for {table} is not implemented yet</div>
+      forms[table] ? forms[table](type, data, setOpen, relatedData) : <div className="p-4 text-center">Form for {table} is not implemented yet</div>
     ) : (
       "Form not found!"
     );
