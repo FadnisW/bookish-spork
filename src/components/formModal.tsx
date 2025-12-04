@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
 import { deleteSubject } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 // USE LAZY LOADING
 
@@ -75,23 +77,42 @@ const FormModal = ({
       : "bg-lamaPurple";
 
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const Form = () => {
-    return type === "delete" && id ? (
-      <form action={deleteSubject} className="p-4 flex flex-col gap-4">
-        <input type="hidden" name="id" value={id} />
-        <span className="text-center font-medium">
-          All data will be lost. Are you sure you want to delete this {table}?
-        </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
-        </button>
-      </form>
-    ) : type === "create" || type === "update" ? (
-      forms[table] ? forms[table](type, data, setOpen, relatedData) : <div className="p-4 text-center">Form for {table} is not implemented yet</div>
-    ) : (
-      "Form not found!"
-    );
+    if (type === "delete" && id) {
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const handleDelete = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        const formData = new FormData();
+        formData.append('id', String(id));
+        const res = await deleteSubject(formData);
+        setIsSubmitting(false);
+        if (res && res.success) {
+          toast.success('Subject deleted!');
+          setOpen(false);
+          router.refresh();
+        } else {
+          toast.error('Failed to delete subject.');
+        }
+      };
+      return (
+        <form className="p-4 flex flex-col gap-4" onSubmit={handleDelete}>
+          <input type="hidden" name="id" value={id} />
+          <span className="text-center font-medium">
+            All data will be lost. Are you sure you want to delete this {table}?
+          </span>
+          <button type="submit" className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center" disabled={isSubmitting}>
+            {isSubmitting ? 'Deleting...' : 'Delete'}
+          </button>
+        </form>
+      );
+    } else if(type === "create" || type === "update") {
+      return forms[table] ? forms[table](type, data, setOpen, relatedData) : <div className="p-4 text-center">Form for {table} is not implemented yet</div>;
+    } else {
+      return "Form not found!";
+    }
   };
 
   return (
