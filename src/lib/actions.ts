@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import { revalidatePath } from "next/cache";
 import {
@@ -12,20 +12,19 @@ import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 
 type CurrentState = { success: boolean; error: boolean };
-
-//--- SUBJECT SERVER ACTIONS (React 19+ style) ---//
-
-// New - React server actions signature (called from forms direct)
 export async function createSubject(data: SubjectSchema) {
   try {
     await prisma.subject.create({
       data: {
         name: data.name,
         teachers: {
-          connect: data.teachers.map((teacherId: string) => ({ id: teacherId })),
+          connect: data.teachers.map((teacherId: string) => ({
+            id: teacherId,
+          })),
         },
       },
     });
+    revalidatePath("/list/subjects");
     return { success: true, error: false };
   } catch (err) {
     console.error(err);
@@ -54,14 +53,14 @@ export async function updateSubject(data: SubjectSchema) {
 export async function getAllTeachers() {
   const teachers = await prisma.teacher.findMany({
     select: { id: true, name: true, surname: true },
-    orderBy: { name: 'asc' }
+    orderBy: { name: "asc" },
   });
   return teachers;
 }
 
 export async function deleteSubject(formData: FormData) {
-  const id = formData.get('id');
-  if (!id) return { success: false, error: 'Missing id' };
+  const id = formData.get("id");
+  if (!id) return { success: false, error: "Missing id" };
   try {
     await prisma.subject.delete({
       where: { id: Number(id) },
@@ -141,7 +140,7 @@ export const createTeacher = async (
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata:{role:"teacher"}
+      publicMetadata: { role: "teacher" },
     });
 
     await prisma.teacher.create({
@@ -264,7 +263,7 @@ export const createStudent = async (
       password: data.password,
       firstName: data.name,
       lastName: data.surname,
-      publicMetadata:{role:"student"}
+      publicMetadata: { role: "student" },
     });
 
     await prisma.student.create({

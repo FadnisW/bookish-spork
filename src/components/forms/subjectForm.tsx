@@ -27,27 +27,26 @@ const SubjectForm = ({
   } = useForm<SubjectSchema>({
     resolver: zodResolver(subjectSchema) as any,
   });
-
   const router = useRouter();
   const subjectAction = type === "create" ? createSubject : updateSubject;
   const teachers = relatedData?.teachers || [];
 
+  const onSubmit = async (values: SubjectSchema) => {
+    await subjectAction({
+      id: values.id,
+      name: values.name,
+      teachers: values.teachers,
+    });
+    setOpen(false);
+    toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
+    router.refresh();
+  };
+
   return (
-    <form className="flex flex-col gap-8" action={async (formData: FormData) => {
-      const plainData = Object.fromEntries(formData.entries());
-      await subjectAction({
-        id: plainData.id ? Number(plainData.id) : undefined,
-        name: plainData.name as string,
-        teachers: (plainData.teachers ? Array.isArray(plainData.teachers) ? plainData.teachers : [plainData.teachers] : []) as string[],
-      });
-      setOpen(false);
-      toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
-      router.refresh();
-    }}>
+    <form className="flex flex-col gap-8" onSubmit={handleSubmit(onSubmit)}>
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new subject" : "Update the subject"}
       </h1>
-
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="Subject name"
@@ -56,6 +55,9 @@ const SubjectForm = ({
           register={register}
           error={errors?.name}
         />
+        {errors.name?.message && (
+          <p className="text-xs text-red-400">{errors.name.message.toString()}</p>
+        )}
         {data && (
           <InputField
             label="Id"
@@ -83,9 +85,7 @@ const SubjectForm = ({
             )}
           </select>
           {errors.teachers?.message && (
-            <p className="text-xs text-red-400">
-              {errors.teachers.message.toString()}
-            </p>
+            <p className="text-xs text-red-400">{errors.teachers.message.toString()}</p>
           )}
         </div>
       </div>
