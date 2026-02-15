@@ -1,11 +1,42 @@
+
 "use client";
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useState } from "react";
-import { deleteSubject } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { useEffect, useState, Dispatch, SetStateAction } from "react";
+
+import {
+  deleteClass,
+  deleteExam,
+  deleteStudent,
+  deleteSubject,
+  deleteTeacher,
+  deleteParent,
+  deleteLesson,
+  deleteAssignment,
+  deleteResult,
+  deleteAttendance,
+  deleteEvent,
+  deleteAnnouncement,
+} from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { useFormState } from "react-dom";
+
+const deleteActionMap = {
+  subject: deleteSubject,
+  class: deleteClass,
+  teacher: deleteTeacher,
+  student: deleteStudent,
+  exam: deleteExam,
+  parent: deleteParent,
+  lesson: deleteLesson,
+  assignment: deleteAssignment,
+  result: deleteResult,
+  attendance: deleteAttendance,
+  event: deleteEvent,
+  announcement: deleteAnnouncement,
+};
 
 // USE LAZY LOADING
 
@@ -26,12 +57,17 @@ const forms: {
     relatedData?: any
   ) => JSX.Element;
 } = {
-  teacher: (type, data,) => <TeacherForm type={type} data={data} />,
+  teacher: (type, data) => <TeacherForm type={type} data={data} />,
   student: (type, data) => <StudentForm type={type} data={data} />,
   parent: (type, data) => <div>Parent form not implemented yet</div>,
   subject: (type, data, setOpen, relatedData) => (
     // Always provide setOpen and a fallback empty object for relatedData
-    <SubjectForm type={type} data={data} setOpen={setOpen!} relatedData={relatedData || {teachers: []}} />
+    <SubjectForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { teachers: [] }}
+    />
   ),
   class: (type, data) => <div>Class form not implemented yet</div>,
   lesson: (type, data) => <div>Lesson form not implemented yet</div>,
@@ -40,7 +76,9 @@ const forms: {
   result: (type, data) => <div>Result form not implemented yet</div>,
   attendance: (type, data) => <div>Attendance form not implemented yet</div>,
   event: (type, data) => <div>Event form not implemented yet</div>,
-  announcement: (type, data) => <div>Announcement form not implemented yet</div>
+  announcement: (type, data) => (
+    <div>Announcement form not implemented yet</div>
+  ),
 };
 
 const FormModal = ({
@@ -48,21 +86,21 @@ const FormModal = ({
   type,
   data,
   id,
-  relatedData
+  relatedData,
 }: {
   table:
-    | "teacher"
-    | "student"
-    | "parent"
-    | "subject"
-    | "class"
-    | "lesson"
-    | "exam"
-    | "assignment"
-    | "result"
-    | "attendance"
-    | "event"
-    | "announcement";
+  | "teacher"
+  | "student"
+  | "parent"
+  | "subject"
+  | "class"
+  | "lesson"
+  | "exam"
+  | "assignment"
+  | "result"
+  | "attendance"
+  | "event"
+  | "announcement";
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
@@ -73,43 +111,49 @@ const FormModal = ({
     type === "create"
       ? "bg-lamaYellow"
       : type === "update"
-      ? "bg-lamaSky"
-      : "bg-lamaPurple";
+        ? "bg-lamaSky"
+        : "bg-lamaPurple";
 
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
   const Form = () => {
+    // The server actions expected signature is (currentState, formData).
+    // The return type is Promise<{ success: boolean; error: boolean }>;
+    // So initial state must match { success: boolean; error: boolean }
+    const [state, formAction] = useFormState(deleteActionMap[table], {
+      success: false,
+      error: false,
+    });
+
+    const router = useRouter();
+
+    useEffect(() => {
+      if (state.success) {
+        toast.success(`${table} has been deleted!`);
+        setOpen(false);
+        router.refresh();
+      }
+    }, [state, router]);
+
     if (type === "delete" && id) {
-      const [isSubmitting, setIsSubmitting] = useState(false);
-      const handleDelete = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        const formData = new FormData();
-        formData.append('id', String(id));
-        const res = await deleteSubject(formData);
-        setIsSubmitting(false);
-        if (res && res.success) {
-          toast.success('Subject deleted!');
-          setOpen(false);
-          router.refresh();
-        } else {
-          toast.error('Failed to delete subject.');
-        }
-      };
       return (
-        <form className="p-4 flex flex-col gap-4" onSubmit={handleDelete}>
+        <form action={formAction} className="p-4 flex flex-col gap-4">
           <input type="hidden" name="id" value={id} />
           <span className="text-center font-medium">
             All data will be lost. Are you sure you want to delete this {table}?
           </span>
-          <button type="submit" className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center" disabled={isSubmitting}>
-            {isSubmitting ? 'Deleting...' : 'Delete'}
+          <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
+            Delete
           </button>
         </form>
       );
-    } else if(type === "create" || type === "update") {
-      return forms[table] ? forms[table](type, data, setOpen, relatedData) : <div className="p-4 text-center">Form for {table} is not implemented yet</div>;
+    } else if (type === "create" || type === "update") {
+      return forms[table] ? (
+        forms[table](type, data, setOpen, relatedData)
+      ) : (
+        <div className="p-4 text-center">Form for {table} is not implemented yet</div>
+      );
     } else {
       return "Form not found!";
     }
