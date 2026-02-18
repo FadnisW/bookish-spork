@@ -22,6 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useFormState } from "react-dom";
+import { FormContainerProps } from "./formContainer";
 
 const deleteActionMap = {
   subject: deleteSubject,
@@ -87,25 +88,7 @@ const FormModal = ({
   data,
   id,
   relatedData,
-}: {
-  table:
-  | "teacher"
-  | "student"
-  | "parent"
-  | "subject"
-  | "class"
-  | "lesson"
-  | "exam"
-  | "assignment"
-  | "result"
-  | "attendance"
-  | "event"
-  | "announcement";
-  type: "create" | "update" | "delete";
-  data?: any;
-  id?: number | string;
-  relatedData?: any;
-}) => {
+}: FormContainerProps) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
@@ -122,6 +105,7 @@ const FormModal = ({
     // The return type is Promise<{ success: boolean; error: boolean }>;
     // So initial state must match { success: boolean; error: boolean }
     const [state, formAction] = useFormState(deleteActionMap[table], {
+
       success: false,
       error: false,
     });

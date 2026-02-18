@@ -1,4 +1,5 @@
 import FormModal from "@/components/formModal";
+import FormContainer from "@/components/formContainer";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
@@ -22,59 +23,60 @@ const columns = [
     header: "Teachers",
     accessor: "teachers",
     className: "hidden md:table-cell",
-  }, 
+  },
   ...(role === "admin"
-        ? [
-            {
-              header: "Actions",
-              accessor: "action",
-            },
-          ]
-        : []),
-    ];
+    ? [
+      {
+        header: "Actions",
+        accessor: "action",
+      },
+    ]
+    : []),
+];
 
 const renderRow = (item: SubjectList) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center gap-4 p-4">{item.name}</td>
-      <td className="hidden md:table-cell">{item.teachers.map((teacherItem) => teacherItem.name).join(",")}</td>
-      <td>
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <>
-              <FormModal table="subject" type="update" data={item} />
-              <FormModal table="subject" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
+  <tr
+    key={item.id}
+    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+  >
+    <td className="flex items-center gap-4 p-4">{item.name}</td>
+    <td className="hidden md:table-cell">{item.teachers.map((teacherItem) => teacherItem.name).join(",")}</td>
+    <td>
+      <div className="flex items-center gap-2">
+        {role === "admin" && (
+          <>
+            <FormContainer table="subject" type="update" data={item} />
+            <FormContainer table="subject" type="delete" id={item.id} />
+
+          </>
+        )}
+      </div>
+    </td>
+  </tr>
+);
 
 const SubjectListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const{ page, ...queryParams} = await searchParams;
+  const { page, ...queryParams } = await searchParams;
   const currentPage = Number(page) || 1;
 
   //Settingup Url Conditions
   const query: Prisma.SubjectWhereInput = {};
-  if(queryParams){
-    for (const [ key, value ] of Object.entries(queryParams)){
-      if(value!== undefined){
-        switch(key){
-            case "search":
-              query.name = {
-                contains: value,
-                mode: "insensitive",
-              }
-              break;
-              default:
-              break;
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined) {
+        switch (key) {
+          case "search":
+            query.name = {
+              contains: value,
+              mode: "insensitive",
+            }
+            break;
+          default:
+            break;
         }
       }
     }
@@ -90,7 +92,7 @@ const SubjectListPage = async ({
         id: "asc",
       },
       take: ITEMS_PER_PAGE,
-      skip: ITEMS_PER_PAGE*(currentPage-1),
+      skip: ITEMS_PER_PAGE * (currentPage - 1),
     }),
     prisma.subject.count({
       where: query,
@@ -123,7 +125,7 @@ const SubjectListPage = async ({
       <Table columns={columns} renderRow={item => (
         <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
           <td className="flex items-center gap-4 p-4">{item.name}</td>
-          <td className="hidden md:table-cell">{item.teachers.map((teacherItem: {id: string, name: string, surname: string }) => teacherItem.name).join(",")}</td>
+          <td className="hidden md:table-cell">{item.teachers.map((teacherItem: { id: string, name: string, surname: string }) => teacherItem.name).join(",")}</td>
           <td>
             <div className="flex items-center gap-2">
               {role === "admin" && (
