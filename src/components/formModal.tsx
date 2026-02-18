@@ -50,6 +50,9 @@ const StudentForm = dynamic(() => import("./forms/studentForm"), {
 const SubjectForm = dynamic(() => import("./forms/subjectForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const ClassForm = dynamic(() => import("./forms/classForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const forms: {
   [key: string]: (
     type: "create" | "update",
@@ -70,7 +73,14 @@ const forms: {
       relatedData={relatedData || { teachers: [] }}
     />
   ),
-  class: (type, data) => <div>Class form not implemented yet</div>,
+  class: (type, data, setOpen, relatedData) => (
+    <ClassForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { teachers: [], grades: [] }}
+    />
+  ),
   lesson: (type, data) => <div>Lesson form not implemented yet</div>,
   exam: (type, data) => <div>Exam form not implemented yet</div>,
   assignment: (type, data) => <div>Assignment form not implemented yet</div>,

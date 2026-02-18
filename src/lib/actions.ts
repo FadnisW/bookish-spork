@@ -58,6 +58,14 @@ export async function getAllTeachers() {
   return teachers;
 }
 
+export async function getAllGrades() {
+  const grades = await prisma.grade.findMany({
+    select: { id: true, level: true },
+    orderBy: { level: "asc" },
+  });
+  return grades;
+}
+
 
 export async function deleteSubject(
   currentState: CurrentState,
@@ -76,27 +84,21 @@ export async function deleteSubject(
   }
 }
 
-export const createClass = async (
-  currentState: CurrentState,
-  data: ClassSchema
-) => {
+export async function createClass(data: ClassSchema) {
   try {
     await prisma.class.create({
       data,
     });
 
-    // revalidatePath("/list/class");
+    revalidatePath("/list/classes");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
   }
-};
+}
 
-export const updateClass = async (
-  currentState: CurrentState,
-  data: ClassSchema
-) => {
+export async function updateClass(data: ClassSchema) {
   try {
     await prisma.class.update({
       where: {
@@ -105,13 +107,13 @@ export const updateClass = async (
       data,
     });
 
-    // revalidatePath("/list/class");
+    revalidatePath("/list/classes");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
   }
-};
+}
 
 export const deleteClass = async (
   currentState: CurrentState,
