@@ -238,7 +238,15 @@ export const deleteTeacher = async (
   const id = data.get("id") as string;
   try {
     const client = await clerkClient();
-    await client.users.deleteUser(id);
+    try {
+      await client.users.deleteUser(id);
+    } catch (clerkErr: any) {
+      if (clerkErr.errors?.[0]?.code === "resource_not_found") {
+        console.log(`Clerk user ${id} not found, proceeding with local deletion.`);
+      } else {
+        throw clerkErr; 
+      }
+    }
 
     await prisma.teacher.delete({
       where: {
@@ -248,7 +256,7 @@ export const deleteTeacher = async (
 
     // revalidatePath("/list/teachers");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
     return { success: false, error: true };
   }
@@ -361,7 +369,15 @@ export const deleteStudent = async (
   const id = data.get("id") as string;
   try {
     const client = await clerkClient();
-    await client.users.deleteUser(id);
+    try {
+      await client.users.deleteUser(id);
+    } catch (clerkErr: any) {
+      if (clerkErr.errors?.[0]?.code === "resource_not_found") {
+        console.log(`Clerk user ${id} not found, proceeding with local deletion.`);
+      } else {
+        throw clerkErr; 
+      }
+    }
 
     await prisma.student.delete({
       where: {
@@ -371,7 +387,7 @@ export const deleteStudent = async (
 
     // revalidatePath("/list/students");
     return { success: true, error: false };
-  } catch (err) {
+  } catch (err: any) {
     console.log(err);
     return { success: false, error: true };
   }

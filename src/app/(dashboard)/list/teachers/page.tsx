@@ -93,7 +93,7 @@ const renderRow = (item: TeacherList) => (
         </Link>
         {role === "admin" && (
           <div>
-            <FormModal table="teacher" type="delete" id={Number(item.id)} />
+            <FormModal table="teacher" type="delete" id={item.id} />
           </div>
         )}
       </div>
@@ -210,7 +210,7 @@ const TeacherListPage = async ({
               {role === "admin" && (
                 <>
                   <FormContainer table="teacher" type="update" data={item} relatedData={{ subjects }} />
-                  <FormContainer table="teacher" type="delete" id={Number(item.id)} />
+                  <FormContainer table="teacher" type="delete" id={item.id} />
                 </>
               )}
             </div>
