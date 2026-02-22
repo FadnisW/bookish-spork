@@ -66,6 +66,14 @@ export async function getAllGrades() {
   return grades;
 }
 
+export async function getAllSubjects() {
+  const subjects = await prisma.subject.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  return subjects;
+}
+
 
 export async function deleteSubject(
   currentState: CurrentState,
@@ -135,10 +143,7 @@ export const deleteClass = async (
   }
 };
 
-export const createTeacher = async (
-  currentState: CurrentState,
-  data: TeacherSchema
-) => {
+export const createTeacher = async (data: TeacherSchema) => {
   try {
     const client = await clerkClient();
     const user = await client.users.createUser({
@@ -170,7 +175,7 @@ export const createTeacher = async (
       },
     });
 
-    // revalidatePath("/list/teachers");
+    revalidatePath("/list/teachers");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -178,10 +183,7 @@ export const createTeacher = async (
   }
 };
 
-export const updateTeacher = async (
-  currentState: CurrentState,
-  data: TeacherSchema
-) => {
+export const updateTeacher = async (data: TeacherSchema) => {
   if (!data.id) {
     return { success: false, error: true };
   }
@@ -217,7 +219,7 @@ export const updateTeacher = async (
         },
       },
     });
-    // revalidatePath("/list/teachers");
+    revalidatePath("/list/teachers");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);

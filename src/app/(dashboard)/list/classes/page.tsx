@@ -1,4 +1,5 @@
 import FormModal from "@/components/formModal";
+import FormContainer from "@/components/formContainer";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
@@ -124,8 +125,8 @@ const ClassListPage = async ({
             <div className="flex items-center gap-2">
               {role === "admin" && (
                 <>
-                  <FormModal table="class" type="update" data={item} relatedData={{ teachers, grades }} />
-                  <FormModal table="class" type="delete" id={item.id} />
+                  <FormContainer table="class" type="update" data={item} relatedData={{ teachers, grades }} />
+                  <FormContainer table="class" type="delete" id={item.id} />
                 </>
               )}
             </div>
