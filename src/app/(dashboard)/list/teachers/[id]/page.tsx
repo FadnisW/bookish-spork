@@ -7,6 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import ShortcutLink from "@/components/ShortcutLink";
+import { getAllSubjects } from "@/lib/actions";
 
 const SingleTeacherPage = async ({
   params,
@@ -27,12 +29,22 @@ const SingleTeacherPage = async ({
           classes: true,
         },
       },
+      subjects: true,
+      classes: { select: { _count: { select: { students: true } } } },
+      lessons: { select: { _count: { select: { exams: true, assignments: true } } } },
     },
   });
 
   if (!teacher) {
     return notFound();
   }
+  
+  // Aggregate nested counts that Prisma _count can't do natively
+  const studentCount = teacher.classes.reduce((acc, curr) => acc + curr._count.students, 0);
+  const examCount = teacher.lessons.reduce((acc, curr) => acc + curr._count.exams, 0);
+  const assignmentCount = teacher.lessons.reduce((acc, curr) => acc + curr._count.assignments, 0);
+
+  const allSubjects = await getAllSubjects();
 
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
@@ -60,6 +72,7 @@ const SingleTeacherPage = async ({
                   <FormContainer
                     table="teacher"
                     type="update"
+                    relatedData={{ subjects: JSON.parse(JSON.stringify(allSubjects)) }}
                     data={{
                       id: teacher.id,
                       username: teacher.username,
@@ -71,6 +84,7 @@ const SingleTeacherPage = async ({
                       bloodType: teacher.bloodType,
                       sex: teacher.sex,
                       img: teacher.img,
+                      subjects: JSON.parse(JSON.stringify(teacher.subjects)), // Ensure subjects can be serialized
                     }}
                   />
                 )}
@@ -179,36 +193,36 @@ const SingleTeacherPage = async ({
         <div className="bg-white p-4 rounded-md">
           <h1 className="text-xl font-semibold">Shortcuts</h1>
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-            <Link
+            <ShortcutLink
               className="p-3 rounded-md bg-lamaSkyLight"
               href={`/list/classes?supervisorId=${teacher.id}`}
-            >
-              Teacher&apos;s Classes
-            </Link>
-            <Link
+              label="Teacher's Classes"
+              count={teacher._count.classes}
+            />
+            <ShortcutLink
               className="p-3 rounded-md bg-lamaPurpleLight"
               href={`/list/students?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Students
-            </Link>
-            <Link
+              label="Teacher's Students"
+              count={studentCount}
+            />
+            <ShortcutLink
               className="p-3 rounded-md bg-lamaYellowLight"
               href={`/list/lessons?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Lessons
-            </Link>
-            <Link
+              label="Teacher's Lessons"
+              count={teacher._count.lessons}
+            />
+            <ShortcutLink
               className="p-3 rounded-md bg-pink-50"
               href={`/list/exams?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Exams
-            </Link>
-            <Link
+              label="Teacher's Exams"
+              count={examCount}
+            />
+            <ShortcutLink
               className="p-3 rounded-md bg-lamaSkyLight"
               href={`/list/assignments?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Assignments
-            </Link>
+              label="Teacher's Assignments"
+              count={assignmentCount}
+            />
           </div>
         </div>
         <Performance />
