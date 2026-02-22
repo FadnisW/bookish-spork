@@ -152,7 +152,8 @@ const TeacherForm = ({
             <Image src="/upload.png" alt="" width={28} height={28} />
             <span>Upload a photo</span>
           </label>
-          <input type="file" id="img" {...register("img")} className="hidden" />
+          <input type="file" id="img" className="hidden" />
+          <input type="hidden" {...register("img")} defaultValue={data?.img} />
           {errors.img?.message && (
             <p className="text-xs text-red-400">
               {errors.img.message.toString()}

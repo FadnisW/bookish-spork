@@ -3,7 +3,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useState, Dispatch, SetStateAction } from "react";
+import { useEffect, useState, Dispatch, SetStateAction, useActionState } from "react";
 
 import {
   deleteClass,
@@ -21,7 +21,7 @@ import {
 } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { useFormState } from "react-dom";
+
 import { FormContainerProps } from "./formContainer";
 
 const deleteActionMap = {
@@ -61,7 +61,14 @@ const forms: {
     relatedData?: any
   ) => JSX.Element;
 } = {
-  teacher: (type, data) => <TeacherForm type={type} data={data} />,
+  teacher: (type, data, setOpen, relatedData) => (
+    <TeacherForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { subjects: [] }}
+    />
+  ),
   student: (type, data) => <StudentForm type={type} data={data} />,
   parent: (type, data) => <div>Parent form not implemented yet</div>,
   subject: (type, data, setOpen, relatedData) => (
@@ -114,7 +121,7 @@ const FormModal = ({
     // The server actions expected signature is (currentState, formData).
     // The return type is Promise<{ success: boolean; error: boolean }>;
     // So initial state must match { success: boolean; error: boolean }
-    const [state, formAction] = useFormState(deleteActionMap[table], {
+    const [state, formAction] = useActionState(deleteActionMap[table], {
 
       success: false,
       error: false,
