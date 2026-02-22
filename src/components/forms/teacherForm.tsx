@@ -33,10 +33,14 @@ const TeacherForm = ({
   const subjects = relatedData?.subjects || [];
 
   const onSubmit = handleSubmit(async (values) => {
-    await teacherAction(values);
-    setOpen(false);
-    toast(`Teacher has been ${type === "create" ? "created" : "updated"}!`);
-    router.refresh();
+    const state = await teacherAction(values);
+    if (state.success) {
+      setOpen(false);
+      toast.success(`Teacher has been ${type === "create" ? "created" : "updated"}!`);
+      router.refresh();
+    } else {
+      toast.error(state.message || "Failed to save teacher.");
+    }
   });
 
   return (

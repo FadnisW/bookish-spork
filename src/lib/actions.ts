@@ -145,10 +145,14 @@ export const deleteClass = async (
 
 export const createTeacher = async (data: TeacherSchema) => {
   try {
+    if (!data.password || data.password === "") {
+      return { success: false, error: true, message: "Password is required to create a teacher!" };
+    }
+
     const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
-      password: data.password,
+      ...(data.password ? { password: data.password } : {}),
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "teacher" },
@@ -176,22 +180,22 @@ export const createTeacher = async (data: TeacherSchema) => {
     });
 
     revalidatePath("/list/teachers");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createTeacher] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
+    return { success: false, error: true, message: err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || "Failed to create teacher" };
   }
 };
 
 export const updateTeacher = async (data: TeacherSchema) => {
   if (!data.id) {
-    return { success: false, error: true };
+    return { success: false, error: true, message: "Teacher ID is missing" };
   }
   try {
     const client = await clerkClient();
     const user = await client.users.updateUser(data.id, {
       username: data.username,
-      ...(data.password !== "" && { password: data.password }),
+      ...(data.password ? { password: data.password } : {}),
       firstName: data.name,
       lastName: data.surname,
     });
@@ -201,7 +205,7 @@ export const updateTeacher = async (data: TeacherSchema) => {
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
+        ...(data.password ? { password: data.password } : {}),
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -220,10 +224,10 @@ export const updateTeacher = async (data: TeacherSchema) => {
       },
     });
     revalidatePath("/list/teachers");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateTeacher] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
+    return { success: false, error: true, message: err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || "Failed to update teacher" };
   }
 };
 
@@ -262,13 +266,17 @@ export const createStudent = async (
     });
 
     if (classItem && classItem.capacity === classItem._count.students) {
-      return { success: false, error: true };
+      return { success: false, error: true, message: "Class has reached its capacity!" };
+    }
+
+    if (!data.password || data.password === "") {
+      return { success: false, error: true, message: "Password is required to create a student!" };
     }
 
     const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
-      password: data.password,
+      ...(data.password ? { password: data.password } : {}),
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "student" },
@@ -294,10 +302,10 @@ export const createStudent = async (
     });
 
     // revalidatePath("/list/students");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createStudent] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
+    return { success: false, error: true, message: err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || "Failed to create student" };
   }
 };
 
@@ -306,13 +314,13 @@ export const updateStudent = async (
   data: StudentSchema
 ) => {
   if (!data.id) {
-    return { success: false, error: true };
+    return { success: false, error: true, message: "Student ID is missing" };
   }
   try {
     const client = await clerkClient();
     const user = await client.users.updateUser(data.id, {
       username: data.username,
-      ...(data.password !== "" && { password: data.password }),
+      ...(data.password ? { password: data.password } : {}),
       firstName: data.name,
       lastName: data.surname,
     });
@@ -322,7 +330,7 @@ export const updateStudent = async (
         id: data.id,
       },
       data: {
-        ...(data.password !== "" && { password: data.password }),
+        ...(data.password ? { password: data.password } : {}),
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -339,10 +347,10 @@ export const updateStudent = async (
       },
     });
     // revalidatePath("/list/students");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateStudent] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
+    return { success: false, error: true, message: err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || "Failed to update student" };
   }
 };
 
