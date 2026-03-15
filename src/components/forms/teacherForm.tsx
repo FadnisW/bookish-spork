@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../inputField";
 import Image from "next/image";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { teacherSchema, TeacherSchema } from "@/lib/formValidationsSchemas";
 import { createTeacher, updateTeacher } from "@/lib/actions";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { CldUploadWidget } from "next-cloudinary";
 
 const TeacherForm = ({
   type,
@@ -42,6 +43,8 @@ const TeacherForm = ({
       toast.error(state.message || "Failed to save teacher.");
     }
   });
+
+  const [img,setImg]= useState<any>()
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -117,7 +120,7 @@ const TeacherForm = ({
         <InputField
           label="Birthday"
           name="birthday"
-          defaultValue={data?.birthday ? new Date(data.birthday).toISOString().split("T")[0] : ""}
+          defaultValue={data?.birthday? new Date(data.birthday).toISOString().split("T")[0] : ""}
           register={register}
           error={errors.birthday}
           type="date"
@@ -148,22 +151,24 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-          <label
+
+
+        {/* Image Section */}
+        <CldUploadWidget uploadPreset="Bookish-spork-Teacher" onSuccess={(result,{widget}) => {setImg(result.info); widget.close()}}>
+  {({ open }) => {
+    return (
+      <div
             className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
-            htmlFor="img"
+            onClick={() => open()}
           >
             <Image src="/upload.png" alt="" width={28} height={28} />
             <span>Upload a photo</span>
-          </label>
-          <input type="file" id="img" className="hidden" />
-          <input type="hidden" {...register("img")} defaultValue={data?.img} />
-          {errors.img?.message && (
-            <p className="text-xs text-red-400">
-              {errors.img.message.toString()}
-            </p>
-          )}
-        </div>
+          </div>
+    );
+  }}
+</CldUploadWidget>
+
+        {/* Image Section ends */}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-500">Subjects</label>
           <select
