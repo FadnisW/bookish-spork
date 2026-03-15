@@ -7,6 +7,7 @@ import {
   StudentSchema,
   SubjectSchema,
   TeacherSchema,
+  AssignmentSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -605,22 +606,110 @@ export const deleteLesson = async (
   }
 };
 
+export const createAssignment = async (data: AssignmentSchema) => {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    // Pre-validate lessonId
+    const lesson = await prisma.lesson.findUnique({ where: { id: data.lessonId } });
+    if (!lesson) {
+      return { success: false, error: true, message: "Selected lesson does not exist!" };
+    }
+
+    // Teacher can only create assignments for their own lessons
+    if (role === "teacher") {
+      if (lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You can only create assignments for your own lessons!" };
+      }
+    }
+
+    await prisma.assignment.create({
+      data: {
+        title: data.title,
+        startDate: data.startDate,
+        dueDate: data.dueDate,
+        lessonId: data.lessonId,
+      },
+    });
+
+    revalidatePath("/list/assignments");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createAssignment] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to create assignment" };
+  }
+};
+
+export const updateAssignment = async (data: AssignmentSchema) => {
+  if (!data.id) {
+    return { success: false, error: true, message: "Assignment ID is missing" };
+  }
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    // Pre-validate lessonId
+    const lesson = await prisma.lesson.findUnique({ where: { id: data.lessonId } });
+    if (!lesson) {
+      return { success: false, error: true, message: "Selected lesson does not exist!" };
+    }
+
+    // Teacher can only update assignments for their own lessons
+    if (role === "teacher") {
+      if (lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You can only update assignments for your own lessons!" };
+      }
+      // Also verify the existing assignment belongs to this teacher
+      const existingAssignment = await prisma.assignment.findUnique({
+        where: { id: data.id },
+        include: { lesson: true },
+      });
+      if (!existingAssignment || existingAssignment.lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You do not have permission to update this assignment!" };
+      }
+    }
+
+    await prisma.assignment.update({
+      where: { id: data.id },
+      data: {
+        title: data.title,
+        startDate: data.startDate,
+        dueDate: data.dueDate,
+        lessonId: data.lessonId,
+      },
+    });
+
+    revalidatePath("/list/assignments");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateAssignment] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to update assignment" };
+  }
+};
+
 export const deleteAssignment = async (
   currentState: CurrentState,
   data: FormData
 ) => {
   const id = data.get("id") as string;
+
   try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
     await prisma.assignment.delete({
       where: {
         id: parseInt(id),
+        // Teacher can only delete their own assignments
+        ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
       },
     });
 
-    // revalidatePath("/list/assignments");
+    revalidatePath("/list/assignments");
     return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.log("[deleteAssignment] Error:", err.message || err);
     return { success: false, error: true };
   }
 };
