@@ -16,7 +16,7 @@ const ShortcutLink = ({ href, label, count, className }: ShortcutLinkProps) => {
       <button
         type="button"
         className={className}
-        onClick={() => toast(`No ${label.toLowerCase().replace("'", "")} found for this teacher.`, { type: "info" })}
+        onClick={() => toast(`No ${label.toLowerCase().replace("'s", "").replace("teacher", "").replace("student", "").trim()} found.`, { type: "info" })}
       >
         {label}
       </button>

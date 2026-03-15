@@ -74,6 +74,14 @@ export async function getAllSubjects() {
   return subjects;
 }
 
+export async function getAllClasses() {
+  const classes = await prisma.class.findMany({
+    select: { id: true, name: true, capacity: true, _count: { select: { students: true } } },
+    orderBy: { name: "asc" },
+  });
+  return classes;
+}
+
 
 export async function deleteSubject(
   currentState: CurrentState,
@@ -262,10 +270,7 @@ export const deleteTeacher = async (
   }
 };
 
-export const createStudent = async (
-  currentState: CurrentState,
-  data: StudentSchema
-) => {
+export const createStudent = async (data: StudentSchema) => {
   console.log(data);
   try {
     const classItem = await prisma.class.findUnique({
@@ -317,10 +322,7 @@ export const createStudent = async (
   }
 };
 
-export const updateStudent = async (
-  currentState: CurrentState,
-  data: StudentSchema
-) => {
+export const updateStudent = async (data: StudentSchema) => {
   if (!data.id) {
     return { success: false, error: true, message: "Student ID is missing" };
   }

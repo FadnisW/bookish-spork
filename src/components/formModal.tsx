@@ -69,7 +69,14 @@ const forms: {
       relatedData={relatedData || { subjects: [] }}
     />
   ),
-  student: (type, data) => <StudentForm type={type} data={data} />,
+  student: (type, data, setOpen, relatedData) => (
+    <StudentForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { grades: [], classes: [] }}
+    />
+  ),
   parent: (type, data) => <div>Parent form not implemented yet</div>,
   subject: (type, data, setOpen, relatedData) => (
     // Always provide setOpen and a fallback empty object for relatedData
