@@ -10,6 +10,7 @@ import {
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 type CurrentState = { success: boolean; error: boolean };
 export async function createSubject(data: SubjectSchema) {
@@ -80,6 +81,21 @@ export async function getAllClasses() {
     orderBy: { name: "asc" },
   });
   return classes;
+}
+
+export async function getAllLessons(teacherId?: string) {
+  const lessons = await prisma.lesson.findMany({
+    where: teacherId ? { teacherId } : {},
+    select: {
+      id: true,
+      name: true,
+      subject: { select: { name: true } },
+      class: { select: { name: true } },
+      teacher: { select: { name: true, surname: true } },
+    },
+    orderBy: { name: "asc" },
+  });
+  return lessons;
 }
 
 
@@ -440,26 +456,23 @@ export const deleteStudent = async (
   }
 };
 
-export const createExam = async (
-  currentState: CurrentState,
-  data: ExamSchema
-) => {
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
+export const createExam = async (data: ExamSchema) => {
   try {
-    // if (role === "teacher") {
-    //   const teacherLesson = await prisma.lesson.findFirst({
-    //     where: {
-    //       teacherId: userId!,
-    //       id: data.lessonId,
-    //     },
-    //   });
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-    //   if (!teacherLesson) {
-    //     return { success: false, error: true };
-    //   }
-    // }
+    // Pre-validate lessonId
+    const lesson = await prisma.lesson.findUnique({ where: { id: data.lessonId } });
+    if (!lesson) {
+      return { success: false, error: true, message: "Selected lesson does not exist!" };
+    }
+
+    // Teacher can only create exams for their own lessons
+    if (role === "teacher") {
+      if (lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You can only create exams for your own lessons!" };
+      }
+    }
 
     await prisma.exam.create({
       data: {
@@ -470,39 +483,45 @@ export const createExam = async (
       },
     });
 
-    // revalidatePath("/list/subjects");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    revalidatePath("/list/exams");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createExam] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to create exam" };
   }
 };
 
-export const updateExam = async (
-  currentState: CurrentState,
-  data: ExamSchema
-) => {
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
+export const updateExam = async (data: ExamSchema) => {
+  if (!data.id) {
+    return { success: false, error: true, message: "Exam ID is missing" };
+  }
   try {
-    // if (role === "teacher") {
-    //   const teacherLesson = await prisma.lesson.findFirst({
-    //     where: {
-    //       teacherId: userId!,
-    //       id: data.lessonId,
-    //     },
-    //   });
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
 
-    //   if (!teacherLesson) {
-    //     return { success: false, error: true };
-    //   }
-    // }
+    // Pre-validate lessonId
+    const lesson = await prisma.lesson.findUnique({ where: { id: data.lessonId } });
+    if (!lesson) {
+      return { success: false, error: true, message: "Selected lesson does not exist!" };
+    }
+
+    // Teacher can only update exams for their own lessons
+    if (role === "teacher") {
+      if (lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You can only update exams for your own lessons!" };
+      }
+      // Also verify the existing exam belongs to this teacher
+      const existingExam = await prisma.exam.findUnique({
+        where: { id: data.id },
+        include: { lesson: true },
+      });
+      if (!existingExam || existingExam.lesson.teacherId !== userId) {
+        return { success: false, error: true, message: "You do not have permission to update this exam!" };
+      }
+    }
 
     await prisma.exam.update({
-      where: {
-        id: data.id,
-      },
+      where: { id: data.id },
       data: {
         title: data.title,
         startTime: data.startTime,
@@ -511,11 +530,11 @@ export const updateExam = async (
       },
     });
 
-    // revalidatePath("/list/subjects");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
+    revalidatePath("/list/exams");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateExam] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to update exam" };
   }
 };
 
@@ -526,21 +545,22 @@ export const deleteExam = async (
 ) => {
   const id = data.get("id") as string;
 
-  // const { userId, sessionClaims } = auth();
-  // const role = (sessionClaims?.metadata as { role?: string })?.role;
-
   try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
     await prisma.exam.delete({
       where: {
         id: parseInt(id),
-        // ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
+        // Teacher can only delete their own exams
+        ...(role === "teacher" ? { lesson: { teacherId: userId! } } : {}),
       },
     });
 
-    // revalidatePath("/list/subjects");
+    revalidatePath("/list/exams");
     return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.log("[deleteExam] Error:", err.message || err);
     return { success: false, error: true };
   }
 };
