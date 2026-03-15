@@ -8,6 +8,8 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import ShortcutLink from "@/components/ShortcutLink";
 import { getAllGrades, getAllClasses } from "@/lib/actions";
+import { Suspense } from "react";
+import StudentAttendanceCard from "@/components/StudentAttendanceCard";
 
 const SingleStudentPage = async ({
   params,
@@ -132,19 +134,17 @@ const SingleStudentPage = async ({
           {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
             {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleAttendance.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">90%</h1>
-                <span className="text-sm text-gray-400">Attendance</span>
+            <Suspense fallback={
+              <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
+                <Image src="/singleAttendance.png" alt="" width={24} height={24} className="w-6 h-6" />
+                <div className="">
+                  <h1 className="text-xl font-semibold">...</h1>
+                  <span className="text-sm text-gray-400">Attendance</span>
+                </div>
               </div>
-            </div>
+            }>
+              <StudentAttendanceCard id={id} />
+            </Suspense>
             {/* CARD */}
             <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
               <Image
