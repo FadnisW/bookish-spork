@@ -160,32 +160,39 @@ export const createTeacher = async (data: TeacherSchema) => {
     const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
-      ...(data.password ? { password: data.password } : {}),
+      password: data.password,
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "teacher" },
     });
 
-    await prisma.teacher.create({
-      data: {
-        id: user.id,
-        username: data.username,
-        name: data.name,
-        surname: data.surname,
-        email: data.email || null,
-        phone: data.phone || null,
-        address: data.address,
-        img: data.img || null,
-        bloodType: data.bloodType,
-        sex: data.sex,
-        birthday: data.birthday,
-        subjects: {
-          connect: data.subjects?.map((subjectId: string) => ({
-            id: parseInt(subjectId),
-          })),
+    // Create Prisma record — rollback Clerk user if this fails
+    try {
+      await prisma.teacher.create({
+        data: {
+          id: user.id,
+          username: data.username,
+          name: data.name,
+          surname: data.surname,
+          email: data.email || null,
+          phone: data.phone || null,
+          address: data.address,
+          img: data.img || null,
+          bloodType: data.bloodType,
+          sex: data.sex,
+          birthday: data.birthday,
+          subjects: {
+            connect: data.subjects?.map((subjectId: string) => ({
+              id: parseInt(subjectId),
+            })),
+          },
         },
-      },
-    });
+      });
+    } catch (prismaErr: any) {
+      console.log("[createTeacher] Prisma failed, rolling back Clerk user:", user.id);
+      await client.users.deleteUser(user.id);
+      throw prismaErr;
+    }
 
     revalidatePath("/list/teachers");
     return { success: true, error: false, message: "" };
@@ -271,50 +278,71 @@ export const deleteTeacher = async (
 };
 
 export const createStudent = async (data: StudentSchema) => {
-  console.log(data);
   try {
-    const classItem = await prisma.class.findUnique({
-      where: { id: data.classId },
-      include: { _count: { select: { students: true } } },
-    });
-
-    if (classItem && classItem.capacity === classItem._count.students) {
-      return { success: false, error: true, message: "Class has reached its capacity!" };
-    }
-
+    // ---------- Pre-validate FK references ----------
     if (!data.password || data.password === "") {
       return { success: false, error: true, message: "Password is required to create a student!" };
     }
 
+    const parentExists = await prisma.parent.findUnique({ where: { id: data.parentId } });
+    if (!parentExists) {
+      return { success: false, error: true, message: "Parent ID does not exist! Please provide a valid Parent ID." };
+    }
+
+    const gradeExists = await prisma.grade.findUnique({ where: { id: data.gradeId } });
+    if (!gradeExists) {
+      return { success: false, error: true, message: "Selected grade does not exist!" };
+    }
+
+    const classItem = await prisma.class.findUnique({
+      where: { id: data.classId },
+      include: { _count: { select: { students: true } } },
+    });
+    if (!classItem) {
+      return { success: false, error: true, message: "Selected class does not exist!" };
+    }
+    if (classItem.capacity === classItem._count.students) {
+      return { success: false, error: true, message: "Class has reached its capacity!" };
+    }
+
+    // ---------- Create Clerk user ----------
     const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
-      ...(data.password ? { password: data.password } : {}),
+      password: data.password,
       firstName: data.name,
       lastName: data.surname,
       publicMetadata: { role: "student" },
     });
 
-    await prisma.student.create({
-      data: {
-        id: user.id,
-        username: data.username,
-        name: data.name,
-        surname: data.surname,
-        email: data.email || null,
-        phone: data.phone || null,
-        address: data.address,
-        img: data.img || null,
-        bloodType: data.bloodType,
-        sex: data.sex,
-        birthday: data.birthday,
-        gradeId: data.gradeId,
-        classId: data.classId,
-        parentId: data.parentId,
-      },
-    });
+    // ---------- Create Prisma record (rollback Clerk on failure) ----------
+    try {
+      await prisma.student.create({
+        data: {
+          id: user.id,
+          username: data.username,
+          name: data.name,
+          surname: data.surname,
+          email: data.email || null,
+          phone: data.phone || null,
+          address: data.address,
+          img: data.img || null,
+          bloodType: data.bloodType,
+          sex: data.sex,
+          birthday: data.birthday,
+          gradeId: data.gradeId,
+          classId: data.classId,
+          parentId: data.parentId,
+        },
+      });
+    } catch (prismaErr: any) {
+      // Prisma failed — roll back the Clerk user so we don't leave orphans
+      console.log("[createStudent] Prisma failed, rolling back Clerk user:", user.id);
+      await client.users.deleteUser(user.id);
+      throw prismaErr;
+    }
 
-    // revalidatePath("/list/students");
+    revalidatePath("/list/students");
     return { success: true, error: false, message: "" };
   } catch (err: any) {
     console.log("[createStudent] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
@@ -327,20 +355,37 @@ export const updateStudent = async (data: StudentSchema) => {
     return { success: false, error: true, message: "Student ID is missing" };
   }
   try {
+    // ---------- Pre-validate FK references ----------
+    const parentExists = await prisma.parent.findUnique({ where: { id: data.parentId } });
+    if (!parentExists) {
+      return { success: false, error: true, message: "Parent ID does not exist! Please provide a valid Parent ID." };
+    }
+
+    const gradeExists = await prisma.grade.findUnique({ where: { id: data.gradeId } });
+    if (!gradeExists) {
+      return { success: false, error: true, message: "Selected grade does not exist!" };
+    }
+
+    const classItem = await prisma.class.findUnique({ where: { id: data.classId } });
+    if (!classItem) {
+      return { success: false, error: true, message: "Selected class does not exist!" };
+    }
+
+    // ---------- Update Clerk user ----------
     const client = await clerkClient();
-    const user = await client.users.updateUser(data.id, {
+    await client.users.updateUser(data.id, {
       username: data.username,
       ...(data.password ? { password: data.password } : {}),
       firstName: data.name,
       lastName: data.surname,
     });
 
+    // ---------- Update Prisma record ----------
     await prisma.student.update({
       where: {
         id: data.id,
       },
       data: {
-
         username: data.username,
         name: data.name,
         surname: data.surname,
@@ -356,7 +401,7 @@ export const updateStudent = async (data: StudentSchema) => {
         parentId: data.parentId,
       },
     });
-    // revalidatePath("/list/students");
+    revalidatePath("/list/students");
     return { success: true, error: false, message: "" };
   } catch (err: any) {
     console.log("[updateStudent] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
