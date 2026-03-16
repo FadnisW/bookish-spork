@@ -8,6 +8,7 @@ import {
   SubjectSchema,
   TeacherSchema,
   AssignmentSchema,
+  ResultSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -714,22 +715,160 @@ export const deleteAssignment = async (
   }
 };
 
+export const createResult = async (data: ResultSchema) => {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    if (!data.examId && !data.assignmentId) {
+      return { success: false, error: true, message: "A result must be linked to either an Exam or an Assignment!" };
+    }
+
+    // Teacher can only assign results for their own exams/assignments
+    if (role === "teacher") {
+      let lessonId;
+      if (data.examId) {
+        const exam = await prisma.exam.findUnique({ where: { id: data.examId } });
+        lessonId = exam?.lessonId;
+      } else if (data.assignmentId) {
+        const assignment = await prisma.assignment.findUnique({ where: { id: data.assignmentId } });
+        lessonId = assignment?.lessonId;
+      }
+
+      if (lessonId) {
+        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        if (lesson?.teacherId !== userId) {
+          return { success: false, error: true, message: "You can only assign results for your own lessons!" };
+        }
+      } else {
+        return { success: false, error: true, message: "Assessment not found!" };
+      }
+    }
+
+    await prisma.result.create({
+      data: {
+        score: data.score,
+        feedback: data.feedback,
+        studentId: data.studentId,
+        examId: data.examId || null,
+        assignmentId: data.assignmentId || null,
+      },
+    });
+
+    revalidatePath("/list/results");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createResult] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to create result" };
+  }
+};
+
+export const updateResult = async (data: ResultSchema) => {
+  if (!data.id) {
+    return { success: false, error: true, message: "Result ID is missing" };
+  }
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    if (!data.examId && !data.assignmentId) {
+      return { success: false, error: true, message: "A result must be linked to either an Exam or an Assignment!" };
+    }
+
+    if (role === "teacher") {
+      // Veryify the teacher owns the new assignment/exam they are linking
+      let lessonId;
+      if (data.examId) {
+        const exam = await prisma.exam.findUnique({ where: { id: data.examId } });
+        lessonId = exam?.lessonId;
+      } else if (data.assignmentId) {
+        const assignment = await prisma.assignment.findUnique({ where: { id: data.assignmentId } });
+        lessonId = assignment?.lessonId;
+      }
+
+      if (lessonId) {
+        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        if (lesson?.teacherId !== userId) {
+          return { success: false, error: true, message: "You can only edit results for your own lessons!" };
+        }
+      }
+
+      // Verify the teacher owns the original result they are trying to update
+      const existingResult = await prisma.result.findUnique({
+        where: { id: data.id },
+        include: {
+          exam: { include: { lesson: true } },
+          assignment: { include: { lesson: true } },
+        },
+      });
+
+      const originalTeacherId = existingResult?.exam
+        ? existingResult.exam.lesson.teacherId
+        : existingResult?.assignment?.lesson.teacherId;
+
+      if (originalTeacherId !== userId) {
+        return { success: false, error: true, message: "You do not have permission to update this result!" };
+      }
+    }
+
+    await prisma.result.update({
+      where: { id: data.id },
+      data: {
+        score: data.score,
+        feedback: data.feedback,
+        studentId: data.studentId,
+        examId: data.examId || null,
+        assignmentId: data.assignmentId || null,
+      },
+    });
+
+    revalidatePath("/list/results");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateResult] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to update result" };
+  }
+};
+
 export const deleteResult = async (
   currentState: CurrentState,
   data: FormData
 ) => {
   const id = data.get("id") as string;
+
   try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    // Check ownership before deleting
+    if (role === "teacher") {
+      const existingResult = await prisma.result.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          exam: { include: { lesson: true } },
+          assignment: { include: { lesson: true } },
+        },
+      });
+
+      const originalTeacherId = existingResult?.exam
+        ? existingResult.exam.lesson.teacherId
+        : existingResult?.assignment?.lesson.teacherId;
+
+      if (originalTeacherId !== userId) {
+        return { success: false, error: true };
+      }
+    }
+
     await prisma.result.delete({
       where: {
         id: parseInt(id),
       },
     });
 
-    // revalidatePath("/list/results");
+    revalidatePath("/list/results");
     return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.log("[deleteResult] Error:", err.message || err);
     return { success: false, error: true };
   }
 };

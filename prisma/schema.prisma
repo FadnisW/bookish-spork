@@ -134,6 +134,7 @@ model Assignment {
 model Result {
   id           Int         @id @default(autoincrement())
   score        Int
+  feedback     String?
   examId       Int?
   assignmentId Int?
   studentId    String
