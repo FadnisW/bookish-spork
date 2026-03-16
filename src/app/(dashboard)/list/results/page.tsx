@@ -134,6 +134,7 @@ const ResultListPage = async ({
       teacherName: assessment.lesson.teacher.name,
       teacherSurname: assessment.lesson.teacher.surname,
       score: item.score,
+      // @ts-ignore: Prisma cache workaround for the new schema column
       feedback: item.feedback, // Include the newly added feedback property
       className: assessment.lesson.class.name,
       startTime: isExam ? assessment.startTime : assessment.startDate,

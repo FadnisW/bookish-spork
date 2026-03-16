@@ -34,9 +34,10 @@ const ResultForm = ({
   const exams = relatedData?.exams || [];
   const assignments = relatedData?.assignments || [];
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = handleSubmit(async (values, event) => {
     // Determine whether the assessmentId string is an exam or assignment
-    const assessmentValue = (values as any).assessmentId;
+    const formData = new FormData(event?.target as HTMLFormElement);
+    const assessmentValue = formData.get("assessmentId") as string;
     let examId: number | undefined;
     let assignmentId: number | undefined;
 
@@ -131,7 +132,7 @@ const ResultForm = ({
           <label className="text-xs text-gray-500">Assessment</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("assessmentId" as any)}
+            name="assessmentId"
             defaultValue={defaultAssessment}
           >
             <option value="">Select an assessment</option>
