@@ -8,6 +8,7 @@ import { Prisma, Assignment, Subject, Class, Teacher } from "@prisma/client";
 import Image from "next/image";
 import { auth } from "@clerk/nextjs/server";
 import { getAllLessons } from "@/lib/actions";
+import Link from "next/link";
 
 type AssignmentList = Assignment & {
   lesson: {
@@ -187,6 +188,11 @@ const AssignmentListPage = async ({
             <div className="flex items-center gap-2">
               {(role === "admin" || role === "teacher") && (
                 <>
+                  <Link href={`/list/evaluate?type=assignment&id=${item.id}`} passHref>
+                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSkyLight" title="Grade Assignment">
+                      <Image src="/result.png" alt="" width={16} height={16} />
+                    </button>
+                  </Link>
                   <FormContainer table="assignment" type="update" data={item} relatedData={{ lessons }} />
                   <FormContainer table="assignment" type="delete" id={item.id} />
                 </>

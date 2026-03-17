@@ -9,6 +9,7 @@ import {
   TeacherSchema,
   AssignmentSchema,
   ResultSchema,
+  BulkResultSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -829,6 +830,72 @@ export const updateResult = async (data: ResultSchema) => {
   } catch (err: any) {
     console.log("[updateResult] Error:", err.message || err);
     return { success: false, error: true, message: err.message || "Failed to update result" };
+  }
+};
+
+export const saveBulkResults = async (data: BulkResultSchema) => {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    if (!data.examId && !data.assignmentId) {
+      return { success: false, error: true, message: "A result must be linked to either an Exam or an Assignment!" };
+    }
+
+    // Teacher can only assign results for their own exams/assignments
+    if (role === "teacher") {
+      let lessonId;
+      if (data.examId) {
+        const exam = await prisma.exam.findUnique({ where: { id: data.examId } });
+        lessonId = exam?.lessonId;
+      } else if (data.assignmentId) {
+        const assignment = await prisma.assignment.findUnique({ where: { id: data.assignmentId } });
+        lessonId = assignment?.lessonId;
+      }
+
+      if (lessonId) {
+        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        if (lesson?.teacherId !== userId) {
+          return { success: false, error: true, message: "You can only assign results for your own lessons!" };
+        }
+      } else {
+        return { success: false, error: true, message: "Assessment not found!" };
+      }
+    }
+
+    // Use Prisma transaction boundaries to ensure safety matching single-CRUD mapping limits
+    const transactions = data.results.map((res) => {
+      // If result already has an ID, update it natively instead of upserting globally
+      if (res.id) {
+        return prisma.result.update({
+          where: { id: res.id },
+          data: {
+            score: res.score,
+            // @ts-ignore: Prisma cache workaround
+            feedback: res.feedback || null,
+          },
+        });
+      } else {
+        return prisma.result.create({
+          data: {
+            score: res.score,
+            // @ts-ignore: Prisma cache workaround
+            feedback: res.feedback || null,
+            studentId: res.studentId,
+            examId: data.examId || null,
+            assignmentId: data.assignmentId || null,
+          },
+        });
+      }
+    });
+
+    await prisma.$transaction(transactions);
+
+    revalidatePath("/list/results");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[saveBulkResults] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to bulk save results" };
   }
 };
 

@@ -8,6 +8,7 @@ import Image from "next/image";
 import FormContainer from "@/components/formContainer";
 import { auth } from "@clerk/nextjs/server";
 import { getAllLessons } from "@/lib/actions";
+import Link from "next/link";
 
 type ExamList = Exam & {
   lesson: {
@@ -180,6 +181,11 @@ const ExamListPage = async ({
             <div className="flex items-center gap-2">
               {(role === "admin" || role === "teacher") && (
                 <>
+                  <Link href={`/list/evaluate?type=exam&id=${item.id}`} passHref>
+                    <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSkyLight" title="Grade Exam">
+                      <Image src="/result.png" alt="" width={16} height={16} />
+                    </button>
+                  </Link>
                   <FormContainer table="exam" type="update" data={item} relatedData={{ lessons }} />
                   <FormContainer table="exam" type="delete" id={item.id} />
                 </>

@@ -108,3 +108,18 @@ export const resultSchema = z.object({
 });
 
 export type ResultSchema = z.infer<typeof resultSchema>;
+
+export const bulkResultSchema = z.object({
+  examId: z.coerce.number().optional(),
+  assignmentId: z.coerce.number().optional(),
+  results: z.array(
+    z.object({
+      id: z.coerce.number().optional(),
+      studentId: z.string(),
+      score: z.coerce.number().min(0).max(100, { message: "Score must be between 0 and 100!" }),
+      feedback: z.string().optional().or(z.literal("")),
+    })
+  ),
+});
+
+export type BulkResultSchema = z.infer<typeof bulkResultSchema>;
