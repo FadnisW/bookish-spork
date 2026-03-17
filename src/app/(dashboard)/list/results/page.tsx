@@ -265,8 +265,18 @@ const ResultListPage = async ({
           <td className="flex items-center gap-4 p-4">{item.title}</td>
           <td>{item.studentName + " " + item.studentSurname}</td>
           <td className="hidden md:table-cell font-semibold">{item.score}</td>
-          <td className="hidden md:table-cell text-gray-500 italic max-w-40 truncate">
-            {item.feedback || "-"}
+          <td className="hidden md:table-cell text-gray-500 italic relative group">
+            {item.feedback ? (
+              <>
+                <span className="inline-block max-w-32 truncate">{item.feedback}</span>
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-max max-w-xs bg-gray-700/90 text-white text-xs rounded-md p-2 shadow-lg z-50 whitespace-normal">
+                  {item.feedback}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-700/90"></div>
+                </div>
+              </>
+            ) : (
+              "-"
+            )}
           </td>
           <td className="hidden md:table-cell">{item.teacherName + " " + item.teacherSurname}</td>
           <td className="hidden md:table-cell">{item.className}</td>
