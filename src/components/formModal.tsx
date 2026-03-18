@@ -47,6 +47,9 @@ const TeacherForm = dynamic(() => import("./forms/teacherForm"), {
 const StudentForm = dynamic(() => import("./forms/studentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const ParentForm = dynamic(() => import("./forms/parentForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const SubjectForm = dynamic(() => import("./forms/subjectForm"), {
   loading: () => <h1>Loading...</h1>,
 });
@@ -86,7 +89,14 @@ const forms: {
       relatedData={relatedData || { grades: [], classes: [] }}
     />
   ),
-  parent: (type, data) => <div>Parent form not implemented yet</div>,
+  parent: (type, data, setOpen, relatedData) => (
+    <ParentForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData}
+    />
+  ),
   subject: (type, data, setOpen, relatedData) => (
     // Always provide setOpen and a fallback empty object for relatedData
     <SubjectForm

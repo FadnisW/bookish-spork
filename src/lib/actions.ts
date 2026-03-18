@@ -10,6 +10,7 @@ import {
   AssignmentSchema,
   ResultSchema,
   BulkResultSchema,
+  ParentSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -580,11 +581,85 @@ export const deleteParent = async (
       },
     });
 
-    // revalidatePath("/list/parents");
+    const client = await clerkClient();
+    await client.users.deleteUser(id);
+
+    revalidatePath("/list/parents");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
+  }
+};
+
+export const createParent = async (data: ParentSchema) => {
+  try {
+    const client = await clerkClient();
+    const user = await client.users.createUser({
+      username: data.username,
+      password: data.password,
+      firstName: data.name,
+      lastName: data.surname,
+      publicMetadata: { role: "parent" },
+    });
+
+    try {
+      await prisma.parent.create({
+        data: {
+          id: user.id,
+          username: data.username,
+          name: data.name,
+          surname: data.surname,
+          email: data.email || null,
+          phone: data.phone,
+          address: data.address,
+        },
+      });
+    } catch (prismaErr: any) {
+      console.log("[createParent] Prisma failed, rolling back Clerk user:", user.id);
+      await client.users.deleteUser(user.id);
+      throw prismaErr;
+    }
+
+    revalidatePath("/list/parents");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createParent] Error:", err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || err);
+    return { success: false, error: true, message: err.errors?.[0]?.longMessage || err.errors?.[0]?.message || err.message || "Failed to create parent" };
+  }
+};
+
+export const updateParent = async (data: ParentSchema) => {
+  if (!data.id) {
+    return { success: false, error: true, message: "Parent ID is missing" };
+  }
+  try {
+    const client = await clerkClient();
+    await client.users.updateUser(data.id, {
+      username: data.username,
+      ...(data.password ? { password: data.password } : {}),
+      firstName: data.name,
+      lastName: data.surname,
+    });
+
+    await prisma.parent.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        username: data.username,
+        name: data.name,
+        surname: data.surname,
+        email: data.email || null,
+        phone: data.phone,
+        address: data.address,
+      },
+    });
+    revalidatePath("/list/parents");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[updateParent] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to update parent" };
   }
 };
 

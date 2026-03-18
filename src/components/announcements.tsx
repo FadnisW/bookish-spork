@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
-const Announcements = async () => {
+const Announcements = async ({ classId }: { classId?: number }) => {
   const { userId, sessionClaims } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
@@ -15,12 +15,17 @@ const Announcements = async () => {
     take: 3,
     orderBy: { date: "desc" },
     where: {
-      ...(role !== "admin" && {
+      ...(classId !== undefined ? {
+        OR: [
+          { classId: null },
+          { classId: classId },
+        ],
+      } : (role !== "admin" && {
         OR: [
           { classId: null },
           { class: roleConditions[role as keyof typeof roleConditions] || {} },
         ],
-      }),
+      })),
     },
   });
 

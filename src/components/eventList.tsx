@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 
-const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
+const EventList = async ({ dateParam, classId }: { dateParam: string | undefined; classId?: number }) => {
   const date = dateParam ? new Date(dateParam) : new Date();
 
   const data = await prisma.event.findMany({
@@ -9,6 +9,12 @@ const EventList = async ({ dateParam }: { dateParam: string | undefined }) => {
         gte: new Date(date.setHours(0, 0, 0, 0)),
         lte: new Date(date.setHours(23, 59, 59, 999)),
       },
+      ...(classId && {
+        OR: [
+          { classId: null },
+          { classId: classId },
+        ],
+      }),
     },
   });
 
