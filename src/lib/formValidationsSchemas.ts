@@ -147,3 +147,20 @@ export const parentSchema = z.object({
 });
 
 export type ParentSchema = z.infer<typeof parentSchema>;
+
+export const bulkAttendanceSchema = z.object({
+  date: z.coerce.date(),
+  classId: z.coerce.number(),
+  lessonId: z.coerce.number().optional(),
+  forceOverride: z.boolean().optional(),
+  records: z.array(
+    z.object({
+      studentId: z.string(),
+      status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "HALF_DAY"]),
+      remark: z.string().optional().or(z.literal("")),
+      minutesLate: z.coerce.number().optional()
+    })
+  )
+});
+
+export type BulkAttendanceSchema = z.infer<typeof bulkAttendanceSchema>;

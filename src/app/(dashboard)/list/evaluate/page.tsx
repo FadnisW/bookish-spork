@@ -93,7 +93,7 @@ const BulkEvaluatePage = async ({
       resultId: existingResult?.id,
       score: existingResult?.score,
       // @ts-ignore: Prisma schema cache workaround
-      feedback: existingResult?.feedback,
+      feedback: existingResult?.feedback ?? undefined,
     };
   });
 

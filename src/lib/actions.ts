@@ -11,6 +11,7 @@ import {
   ResultSchema,
   BulkResultSchema,
   ParentSchema,
+  BulkAttendanceSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -1074,5 +1075,171 @@ export const deleteAnnouncement = async (
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
+  }
+};
+
+export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    if (!userId || !role) throw new Error("Unauthorized");
+
+    // 1. Validate Scope & Authorization
+    const { date, classId, lessonId, forceOverride, records } = data;
+    
+    // Get class info
+    const cls = await prisma.class.findUnique({ where: { id: classId } });
+    if (!cls) throw new Error("Class not found");
+
+    if (role === "teacher") {
+       if (!lessonId && cls.supervisorId !== userId) {
+          throw new Error("Only the Class Supervisor can mark 'Whole Day' attendance.");
+       }
+       if (lessonId) {
+          const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+          if (!lesson || (lesson.teacherId !== userId && cls.supervisorId !== userId)) {
+             throw new Error("You do not have permission to mark this lesson.");
+          }
+       }
+    }
+
+    // 2. Resolve Lessons to Update
+    let targetLessons: number[] = [];
+    if (lessonId) {
+       targetLessons = [lessonId];
+    } else {
+       // 'Whole Day' logic
+       // Convert Date object to day of week enum (MONDAY, TUESDAY...)
+       const jsDate = new Date(date);
+       const dayOfWeekNum = jsDate.getDay(); // 0 is Sunday, 1 is Monday...
+       const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+       const currentDayString = days[dayOfWeekNum];
+       
+       const todaysLessons = await prisma.lesson.findMany({
+          where: { classId, day: currentDayString as any },
+          select: { id: true, teacherId: true }
+       });
+       targetLessons = todaysLessons.map(l => l.id);
+    }
+
+    if (targetLessons.length === 0) {
+       return { success: true, error: false, message: "No lessons found for this date/class." };
+    }
+
+    // 3. Prevent edits locked after 48 hours
+    const LOCK_MS = 48 * 60 * 60 * 1000;
+    const now = new Date().getTime();
+
+    // 4. Build PRISMA TX Operations
+    const operations = [];
+
+    // Fetch existing records for these students and lessons on this date
+    // We compare date loosely avoiding timezone shifts
+    const startOfDay = new Date(new Date(date).setHours(0,0,0,0));
+    const endOfDay = new Date(new Date(date).setHours(23,59,59,999));
+
+    const existingRecords = await prisma.attendance.findMany({
+       where: {
+          studentId: { in: records.map(r => r.studentId) },
+          lessonId: { in: targetLessons },
+          date: {
+             gte: startOfDay,
+             lte: endOfDay
+          }
+       }
+    });
+
+    const existingMap = new Map();
+    existingRecords.forEach(r => {
+       existingMap.set(`${r.studentId}-${r.lessonId}`, r);
+    });
+
+    for (const record of records) {
+       for (const targetLessonId of targetLessons) {
+          const mapKey = `${record.studentId}-${targetLessonId}`;
+          const existing = existingMap.get(mapKey);
+
+          // Lock check
+          if (existing && existing.updatedAt) {
+             const timeDiff = now - new Date(existing.updatedAt).getTime();
+             if (timeDiff > LOCK_MS) continue; // Skip locked
+          }
+
+          // Conflict Resolution: If Whole Day but already marked by Specific Teacher, skip unless forceOverride
+          if (!lessonId && existing && existing.markedBy !== userId) {
+             if (!forceOverride) continue; // Skip because another teacher marked it
+          }
+
+          if (existing) {
+             operations.push(
+               prisma.attendance.update({
+                  where: { id: existing.id },
+                  data: {
+                     status: record.status,
+                     remarks: record.remark || null,
+                     minutesLate: record.minutesLate || null,
+                     updatedBy: userId,
+                  } as any
+               })
+             );
+          } else {
+             operations.push(
+               prisma.attendance.create({
+                  data: {
+                     date: startOfDay, // Storing exactly at midnight to avoid tz issues
+                     status: record.status,
+                     remarks: record.remark || null,
+                     minutesLate: record.minutesLate || null,
+                     studentId: record.studentId,
+                     lessonId: targetLessonId,
+                     teacherId: userId,
+                     markedBy: userId,
+                     updatedBy: userId,
+                     present: record.status === "PRESENT" || record.status === "LATE", // To satisfy legacy schema requirement
+                  } as any
+               })
+             );
+          }
+       }
+    }
+
+    if (operations.length > 0) {
+       await prisma.$transaction(operations);
+    }
+
+    revalidatePath("/list/attendance");
+    return { success: true, error: false, message: "Attendance saved successfully." };
+
+  } catch (err: any) {
+    console.log("[saveBulkAttendance] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to save attendance" };
+  }
+};
+
+export const submitAbsenceNote = async (attendanceId: number, attachmentUrl: string) => {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+    if (role !== "parent" && role !== "admin") throw new Error("Unauthorized");
+
+    const attendance = await prisma.attendance.findUnique({
+      where: { id: attendanceId },
+      include: { student: true }
+    });
+
+    if (!attendance || (role === "parent" && attendance.student.parentId !== userId)) {
+      throw new Error("Unauthorized or record not found.");
+    }
+
+    await prisma.attendance.update({
+      where: { id: attendanceId },
+      data: { attachment: attachmentUrl, status: "EXCUSED", updatedBy: userId } as any
+    });
+
+    revalidatePath("/list/attendance");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.log("[submitAbsenceNote] Error:", err.message || err);
+    return { success: false, error: true, message: err.message };
   }
 };
