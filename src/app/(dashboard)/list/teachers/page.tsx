@@ -122,10 +122,14 @@ const TeacherListPage = async ({
             }
             break;
             case "search":
-              query.name = {
-                contains: value,
-                mode: "insensitive",
-              }
+              query.OR = [
+                { name: { contains: value, mode: "insensitive" } },
+                { surname: { contains: value, mode: "insensitive" } },
+                { email: { contains: value, mode: "insensitive" } },
+                { phone: { contains: value, mode: "insensitive" } },
+                { subjects: { some: { name: { contains: value, mode: "insensitive" } } } },
+                { classes: { some: { name: { contains: value, mode: "insensitive" } } } },
+              ];
               break;
               default:
               break;

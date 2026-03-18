@@ -33,6 +33,7 @@ const AssignmentListPage = async ({
   // Setting up Url Conditions
   const query: Prisma.AssignmentWhereInput = {};
   query.lesson = {};
+  const queryAnd: Prisma.AssignmentWhereInput[] = [];
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
@@ -44,9 +45,15 @@ const AssignmentListPage = async ({
             query.lesson.classId = Number(value);
             break;
           case "search":
-            query.lesson.subject = {
-              name: { contains: value, mode: "insensitive" },
-            };
+            queryAnd.push({
+              OR: [
+                { title: { contains: value, mode: "insensitive" } },
+                { lesson: { subject: { name: { contains: value, mode: "insensitive" } } } },
+                { lesson: { class: { name: { contains: value, mode: "insensitive" } } } },
+                { lesson: { teacher: { name: { contains: value, mode: "insensitive" } } } },
+                { lesson: { teacher: { surname: { contains: value, mode: "insensitive" } } } },
+              ],
+            });
             break;
           default:
             break;
@@ -82,6 +89,10 @@ const AssignmentListPage = async ({
       break;
     default:
       break;
+  }
+
+  if (queryAnd.length > 0) {
+    query.AND = queryAnd;
   }
 
   const [data, count] = await prisma.$transaction([

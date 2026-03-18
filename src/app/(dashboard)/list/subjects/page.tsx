@@ -70,10 +70,11 @@ const SubjectListPage = async ({
       if (value !== undefined) {
         switch (key) {
           case "search":
-            query.name = {
-              contains: value,
-              mode: "insensitive",
-            }
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { teachers: { some: { name: { contains: value, mode: "insensitive" } } } },
+              { teachers: { some: { surname: { contains: value, mode: "insensitive" } } } },
+            ];
             break;
           default:
             break;

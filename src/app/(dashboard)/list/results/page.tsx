@@ -83,8 +83,15 @@ const ResultListPage = async ({
                queryAnd.push({
                  OR: [
                    { student: { name: { contains: value, mode: "insensitive" } } },
+                   { student: { surname: { contains: value, mode: "insensitive" } } },
                    { exam: { title: { contains: value, mode: "insensitive" } } },
+                   { exam: { lesson: { teacher: { name: { contains: value, mode: "insensitive" } } } } },
+                   { exam: { lesson: { teacher: { surname: { contains: value, mode: "insensitive" } } } } },
+                   { exam: { lesson: { class: { name: { contains: value, mode: "insensitive" } } } } },
                    { assignment: { title: { contains: value, mode: "insensitive" } } },
+                   { assignment: { lesson: { teacher: { name: { contains: value, mode: "insensitive" } } } } },
+                   { assignment: { lesson: { teacher: { surname: { contains: value, mode: "insensitive" } } } } },
+                   { assignment: { lesson: { class: { name: { contains: value, mode: "insensitive" } } } } },
                  ]
                });
                break;

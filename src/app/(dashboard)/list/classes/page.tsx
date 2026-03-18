@@ -62,10 +62,11 @@ const ClassListPage = async ({
             query.supervisorId = value;
             break;
           case "search":
-            query.name = {
-              contains: value,
-              mode: "insensitive",
-            }
+            query.OR = [
+              { name: { contains: value, mode: "insensitive" } },
+              { supervisor: { name: { contains: value, mode: "insensitive" } } },
+              { supervisor: { surname: { contains: value, mode: "insensitive" } } },
+            ];
             break;
           default:
             break;
