@@ -59,10 +59,10 @@ const ProfilePage = async () => {
         
         {/* Top: Header Row with Identity Card and Quick Stats */}
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="w-full lg:w-1/2 flex">
+          <div className="w-full lg:w-3/5 flex">
             <ProfileIdentityCard data={data} role={role} />
           </div>
-          <div className="w-full lg:w-1/2 flex">
+          <div className="w-full lg:w-2/5 flex">
             <ProfileQuickStats data={data} role={role} />
           </div>
         </div>
