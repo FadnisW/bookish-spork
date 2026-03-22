@@ -76,6 +76,24 @@ export default function NotificationBell({
     });
   };
 
+  // ── Hover tooltip state ──────────────────────────────────────────────────
+  const [hoveredNotif, setHoveredNotif] = useState<{
+    description: string;
+    top: number;
+    right: number;
+  } | null>(null);
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLLIElement>, description: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredNotif({
+      description,
+      top: rect.top + rect.height / 2,
+      right: window.innerWidth - rect.left + 8,
+    });
+  };
+
+  const handleMouseLeave = () => setHoveredNotif(null);
+
   return (
     <>
       {/* ── Bell Button ──────────────────────────────────────────────────── */}
@@ -151,7 +169,9 @@ export default function NotificationBell({
                   <li
                     key={n.id}
                     onClick={() => !n.isRead && handleMarkRead(n.id)}
-                    className={`relative group flex gap-3 p-4 border-l-4 ${cfg.color}
+                    onMouseEnter={(e) => n.description ? handleMouseEnter(e, n.description) : undefined}
+                    onMouseLeave={handleMouseLeave}
+                    className={`flex gap-3 p-4 border-l-4 ${cfg.color}
                       ${!n.isRead ? `${cfg.bg} cursor-pointer hover:brightness-95` : "bg-white opacity-70"}
                       transition-all duration-200`}
                   >
@@ -167,20 +187,6 @@ export default function NotificationBell({
                       </div>
                       <span className="text-[10px] text-gray-400 mt-1 block">{timeAgo(n.createdAt)}</span>
                     </div>
-
-                    {/* ── Hover Tooltip (Left Side) ────────────────────── */}
-                    {n.description && (
-                      <div className="absolute right-full top-2 z-[60] mr-3 pointer-events-none
-                        opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0
-                        transition-all duration-300 ease-out origin-right w-64">
-                        <div className="bg-white border border-gray-100 text-gray-800 text-xs
-                          rounded-xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] leading-relaxed relative
-                          before:content-[''] before:absolute before:top-4 before:-right-1.5 before:w-3 before:h-3
-                          before:bg-white before:rotate-45 before:border-r before:border-t before:border-gray-100">
-                          {n.description.length > 80 ? n.description.slice(0, 80) + "…" : n.description}
-                        </div>
-                      </div>
-                    )}
                   </li>
                 );
               })}
@@ -195,6 +201,29 @@ export default function NotificationBell({
           </p>
         </div>
       </div>
+
+      {/* ── Floating Tooltip (rendered outside the panel to avoid overflow clipping) ── */}
+      {hoveredNotif && (
+        <div
+          className="fixed z-[9999] pointer-events-none animate-in fade-in duration-150"
+          style={{
+            top: hoveredNotif.top,
+            right: hoveredNotif.right,
+            transform: "translateY(-50%)",
+          }}
+        >
+          <div className="bg-white border border-gray-200 text-gray-800 text-xs
+            rounded-lg px-3 py-2 shadow-lg leading-relaxed max-w-[220px]
+            relative
+            after:content-[''] after:absolute after:top-1/2 after:-right-1.5 after:w-3 after:h-3
+            after:bg-white after:rotate-45 after:-translate-y-1/2
+            after:border-r after:border-t after:border-gray-200">
+            {hoveredNotif.description.length > 80
+              ? hoveredNotif.description.slice(0, 80) + "…"
+              : hoveredNotif.description}
+          </div>
+        </div>
+      )}
     </>
   );
 }
