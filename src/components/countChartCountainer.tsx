@@ -42,7 +42,7 @@ const CountChartContainer = async ({ date }: { date?: string }) => {
     <div className="bg-white rounded-xl w-full h-full p-4 relative shadow-sm">
       {/* TITLE */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-lg font-semibold text-gray-700">Today's Registry</h1>
+        <h1 className="text-lg font-semibold text-gray-700">Today&apos;s Registry</h1>
         <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
       {/* CHART */}

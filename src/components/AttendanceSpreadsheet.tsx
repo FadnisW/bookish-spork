@@ -39,18 +39,6 @@ const AttendanceSpreadsheet = ({
   forceOverride?: boolean;
   holidayReason?: string | null;
 }) => {
-  // If this date is a holiday/exception, block entire form
-  if (holidayReason) {
-    return (
-      <div className="w-full flex flex-col items-center justify-center p-12 mt-4 bg-amber-50 border-2 border-amber-300 rounded-md">
-        <div className="text-4xl mb-3">🏖️</div>
-        <h2 className="text-lg font-bold text-amber-800">Holiday / Exception Day</h2>
-        <p className="text-sm text-amber-700 mt-2 text-center max-w-md">{holidayReason}</p>
-        <p className="text-xs text-amber-500 mt-4">Attendance cannot be recorded for this date.</p>
-      </div>
-    );
-  }
-
   const [isPending, startTransition] = useTransition();
   const [draftLoaded, setDraftLoaded] = useState(false);
   const draftKey = `attendance-draft-${classId}-${date}-${lessonId || "whole"}`;
@@ -131,6 +119,18 @@ const AttendanceSpreadsheet = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // If this date is a holiday/exception, block entire form rendering
+  if (holidayReason) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center p-12 mt-4 bg-amber-50 border-2 border-amber-300 rounded-md">
+        <div className="text-4xl mb-3">🏖️</div>
+        <h2 className="text-lg font-bold text-amber-800">Holiday / Exception Day</h2>
+        <p className="text-sm text-amber-700 mt-2 text-center max-w-md">{holidayReason}</p>
+        <p className="text-xs text-amber-500 mt-4">Attendance cannot be recorded for this date.</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4 w-full">

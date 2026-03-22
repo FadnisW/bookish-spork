@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Waqar Education Management Dashboard",
+  title: "Education Management Dashboard",
   description: "Next.js Education Management System",
   icons: {
     icon: "/favicon.ico",

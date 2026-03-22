@@ -61,6 +61,7 @@ const ParentPage = async ({
       <div className="w-full xl:w-2/3 flex flex-col gap-4">
         {/* TOP BAR / CHILD SWITCHER */}
         <div className="bg-white p-4 rounded-md">
+          {/* eslint-disable-next-line react/no-children-prop */}
           <ChildSwitcher children={childrenData} />
         </div>
 

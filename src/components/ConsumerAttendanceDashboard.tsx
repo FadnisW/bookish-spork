@@ -117,7 +117,7 @@ const ConsumerAttendanceDashboard = ({ records, role, studentName }: { records: 
                        <span className="text-sm text-gray-500">{r.lesson.subject.name} • {r.lesson.class.name}</span>
                        {(r.remarks || r.attachment) && (
                          <div className="flex items-center gap-2 mt-1">
-                           {r.remarks && <span className="text-xs text-gray-400 italic">"{r.remarks}"</span>}
+                           {r.remarks && <span className="text-xs text-gray-400 italic">&quot;{r.remarks}&quot;</span>}
                            {r.attachment && <a href={r.attachment} target="_blank" className="text-xs text-lamaSky font-semibold hover:underline bg-lamaSkyLight px-2 py-0.5 rounded-full">📄 Note Attached</a>}
                          </div>
                        )}
