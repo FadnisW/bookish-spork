@@ -33,6 +33,8 @@ model Student {
   class       Class        @relation(fields: [classId], references: [id])
   grade       Grade        @relation(fields: [gradeId], references: [id])
   parent      Parent       @relation(fields: [parentId], references: [id])
+  events        Event[]
+  announcements Announcement[]
 }
 
 model Teacher {
@@ -52,6 +54,9 @@ model Teacher {
   lessons   Lesson[]
   attendances Attendance[]
   subjects  Subject[] @relation("SubjectToTeacher")
+  curriculum ClassTeacherAssignment[]
+  events        Event[]
+  announcements Announcement[]
 }
 
 model Parent {
@@ -85,6 +90,7 @@ model Class {
   events        Event[]
   lessons       Lesson[]
   students      Student[]
+  curriculum    ClassTeacherAssignment[]
 }
 
 model Subject {
@@ -92,6 +98,7 @@ model Subject {
   name     String    @unique
   lessons  Lesson[]
   teachers Teacher[] @relation("SubjectToTeacher")
+  curriculum ClassTeacherAssignment[]
 }
 
 model Lesson {
@@ -103,6 +110,10 @@ model Lesson {
   subjectId   Int
   classId     Int
   teacherId   String
+  room        String?
+  lessonType  LessonType   @default(LECTURE)
+  status      LessonStatus @default(ACTIVE)
+  description String?
   assignments Assignment[]
   attendances Attendance[]
   exams       Exam[]
@@ -176,6 +187,12 @@ model Event {
   endTime     DateTime
   classId     Int?
   class       Class?   @relation(fields: [classId], references: [id])
+
+  // Phase 7 Visibility Targeting
+  teacherId   String?
+  teacher     Teacher? @relation(fields: [teacherId], references: [id])
+  studentId   String?
+  student     Student? @relation(fields: [studentId], references: [id])
 }
 
 model Announcement {
@@ -185,6 +202,12 @@ model Announcement {
   date        DateTime
   classId     Int?
   class       Class?   @relation(fields: [classId], references: [id])
+
+  // Phase 7 Visibility Targeting
+  teacherId   String?
+  teacher     Teacher? @relation(fields: [teacherId], references: [id])
+  studentId   String?
+  student     Student? @relation(fields: [studentId], references: [id])
 }
 
 enum UserSex {
@@ -198,6 +221,7 @@ enum Day {
   WEDNESDAY
   THURSDAY
   FRIDAY
+  SATURDAY
 }
 
 enum AttendanceStatus {
@@ -206,4 +230,66 @@ enum AttendanceStatus {
   LATE
   EXCUSED
   HALF_DAY
+}
+
+enum LessonType {
+  LECTURE
+  LAB
+  SEMINAR
+}
+
+enum LessonStatus {
+  ACTIVE
+  CANCELLED
+  SUBSTITUTED
+}
+
+model ClassTeacherAssignment {
+  id        Int     @id @default(autoincrement())
+  classId   Int
+  teacherId String
+  subjectId Int
+
+  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, subjectId]) // Ensures one subject per class has only one teacher
+}
+
+// ─── PHASE 8: UNIVERSAL NOTIFICATION ENGINE ───────────────────────────────────
+
+enum NotificationType {
+  ANNOUNCEMENT
+  EVENT
+  EXAM
+  ASSIGNMENT
+  RESULT
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String?
+  type        NotificationType
+  createdAt   DateTime         @default(now())
+
+  // Visibility targeting (mirrors Phase 7 logic)
+  classId     Int?
+  teacherId   String?
+  studentId   String?
+
+  reads       NotificationRead[]
+}
+
+model NotificationRead {
+  id             Int          @id @default(autoincrement())
+  notificationId Int
+  userId         String       // Clerk user ID
+  readAt         DateTime     @default(now())
+
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId])
 }

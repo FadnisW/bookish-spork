@@ -16,7 +16,8 @@ const EventCalendar = () => {
 
   useEffect(() => {
     if(value instanceof Date){
-      router.push(`?date=${value.toISOString().split("T")[0]}`);
+      const localDateStr = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+      router.push(`?date=${localDateStr}`);
     }
   }, [value, router]);
 

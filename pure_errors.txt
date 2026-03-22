@@ -1,6 +1,6 @@
-﻿.next/types/app/(dashboard)/list/classes/page.ts(34,29): error TS2344: Type '{ searchParams: { [key: string]: string | undefined; }; }' does not satisfy the constraint 'PageProps'.
+.next/types/app/(dashboard)/list/students/page.ts(34,29): error TS2344: Type '{ searchParams: { [key: string]: string | undefined; }; }' does not satisfy the constraint 'PageProps'.
   Types of property 'searchParams' are incompatible.
     Type '{ [key: string]: string | undefined; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
-.next/types/app/(dashboard)/list/subjects/page.ts(34,29): error TS2344: Type '{ searchParams: { [key: string]: string | undefined; }; }' does not satisfy the constraint 'PageProps'.
+.next/types/app/(dashboard)/list/teachers/page.ts(34,29): error TS2344: Type '{ searchParams: { [key: string]: string | undefined; }; }' does not satisfy the constraint 'PageProps'.
   Types of property 'searchParams' are incompatible.
     Type '{ [key: string]: string | undefined; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]

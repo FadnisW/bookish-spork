@@ -58,7 +58,7 @@ const renderRow = (item: SubjectList) => (
 const SubjectListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
   const { page, ...queryParams } = await searchParams;
   const currentPage = Number(page) || 1;

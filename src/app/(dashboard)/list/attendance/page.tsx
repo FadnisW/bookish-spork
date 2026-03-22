@@ -86,15 +86,15 @@ const AttendanceListPage = async (props: {
      let lessons = [];
      if (role === "admin") {
         classes = await prisma.class.findMany({ select: { id: true, name: true, supervisorId: true }});
-        lessons = await prisma.lesson.findMany({ select: { id: true, name: true, classId: true, day: true, teacherId: true }});
+        lessons = await prisma.lesson.findMany({ select: { id: true, name: true, classId: true, day: true, teacherId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }});
      } else {
         classes = await prisma.class.findMany({
            where: { OR: [ { supervisorId: userId! }, { lessons: { some: { teacherId: userId! } } } ] },
-           select: { id: true, name: true, supervisorId: true }
+           select: { id: true, name: true, supervisorId: true, capacity: true }
         });
         lessons = await prisma.lesson.findMany({
            where: { OR: [ { teacherId: userId! }, { class: { supervisorId: userId! } } ] },
-           select: { id: true, name: true, classId: true, day: true, teacherId: true }
+           select: { id: true, name: true, classId: true, day: true, teacherId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }
         });
      }
 
@@ -113,10 +113,18 @@ const AttendanceListPage = async (props: {
         } else {
            const jsDate = new Date(date);
            const dayNum = jsDate.getDay();
-           const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-           const dayStr = days[dayNum];
-           const clsLessons = await prisma.lesson.findMany({ where: { classId: parseInt(classId), day: dayStr as any }});
-           targetLessons = clsLessons.map(l => l.id);
+
+           // Day enum covers MONDAY–SATURDAY (indices 1–6)
+           // Only block Sunday (index 0) — school runs Mon–Sat
+           const SCHOOL_DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+           if (dayNum >= 1 && dayNum <= 6) {
+             const dayStr = SCHOOL_DAYS[dayNum - 1]; // 1→MON … 6→SAT
+             const clsLessons = await prisma.lesson.findMany({
+               where: { classId: parseInt(classId), day: dayStr as any },
+             });
+             targetLessons = clsLessons.map(l => l.id);
+           }
+           // dayNum === 0 (Sunday) → targetLessons stays [], page shows empty state
         }
 
         const startOfDay = new Date(new Date(date).setHours(0,0,0,0));
@@ -137,8 +145,8 @@ const AttendanceListPage = async (props: {
            const record = sRecords[0]; 
            
            let locked = false;
-           if (record && record.updatedAt) {
-              if (now - new Date(record.updatedAt).getTime() > LOCK_MS) locked = true;
+           if (record && (record as any).updatedAt) {
+              if (now - new Date((record as any).updatedAt).getTime() > LOCK_MS) locked = true;
            }
 
            return {
@@ -147,7 +155,7 @@ const AttendanceListPage = async (props: {
               surname: s.surname,
               existingStatus: record?.status,
               existingRemark: record?.remarks || "",
-              existingMinutesLate: record?.minutesLate,
+              existingMinutesLate: (record as any)?.minutesLate,
               locked
            };
         });

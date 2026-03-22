@@ -24,6 +24,16 @@ const columns = [
     accessor: "teacher",
     className: "hidden md:table-cell",
   },
+  {
+    header: "Room",
+    accessor: "room",
+    className: "hidden lg:table-cell",
+  },
+  {
+    header: "Schedule",
+    accessor: "schedule",
+    className: "hidden lg:table-cell",
+  },
   ...(role === "admin"
     ? [
         {
@@ -33,26 +43,7 @@ const columns = [
       ]
     : []),
 ];
-const renderRow = (item: LessonList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="flex items-center gap-4 p-4">{item.subject.name}</td>
-    <td>{item.class.name}</td>
-    <td className="hidden md:table-cell">{item.teacher.name + " " + item.teacher.surname}</td>  
-    <td>
-      <div className="flex items-center gap-2">
-        {role === "admin" && (
-          <>
-            <FormModal table="lesson" type="update" data={item} />
-            <FormModal table="lesson" type="delete" id={item.id} />
-          </>
-        )}
-      </div>
-    </td>
-  </tr>
-);
+
 const LessonListPage = async (props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
@@ -105,7 +96,56 @@ const LessonListPage = async (props: {
       where: query,
     }),
   ]); 
-  
+
+  let subjectsInfo: any = [], classesInfo: any = [], teachersInfo: any = [];
+  if (role === "admin") {
+     const [subjData, classData, teacherData] = await prisma.$transaction([
+        prisma.subject.findMany({ select: { id: true, name: true } }),
+        prisma.class.findMany({ select: { id: true, name: true } }),
+        prisma.teacher.findMany({ 
+          select: { 
+            id: true, 
+            name: true, 
+            surname: true, 
+            subjects: { select: { id: true } },
+            classes: { select: { id: true } }
+          } 
+        })
+     ]);
+     subjectsInfo = subjData;
+     classesInfo = classData;
+     teachersInfo = teacherData;
+  }
+  const relatedData = { subjects: subjectsInfo, classes: classesInfo, teachers: teachersInfo };
+
+  const renderRow = (item: LessonList) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="flex items-center gap-4 p-4">{item.subject.name}</td>
+      <td>{item.class.name}</td>
+      <td className="hidden md:table-cell">{item.teacher.name + " " + item.teacher.surname}</td>  
+      <td className="hidden lg:table-cell">{(item as any).room || "-"}</td>  
+      <td className="hidden lg:table-cell">
+         {item.day.slice(0, 3)} 
+         {" " + new Date(item.startTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true })}
+         {" - "}
+         {new Date(item.endTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true })}
+      </td>
+      <td>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <>
+              <FormModal table="lesson" type="update" data={item} relatedData={relatedData} />
+              <FormModal table="lesson" type="delete" id={item.id} />
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
@@ -120,7 +160,7 @@ const LessonListPage = async (props: {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal table="lesson" type="create" />}
+            {role === "admin" && <FormModal table="lesson" type="create" relatedData={relatedData} />}
           </div>
         </div>
       </div>
@@ -132,4 +172,4 @@ const LessonListPage = async (props: {
   );
 };
 
-export default LessonListPage;
+export default LessonListPage;

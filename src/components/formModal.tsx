@@ -62,7 +62,16 @@ const ExamForm = dynamic(() => import("./forms/examForm"), {
 const AssignmentForm = dynamic(() => import("./forms/assignmentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
+const LessonForm = dynamic(() => import("./forms/lessonForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 const ResultForm = dynamic(() => import("./forms/resultForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const EventForm = dynamic(() => import("./forms/eventForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const AnnouncementForm = dynamic(() => import("./forms/announcementForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const forms: {
@@ -114,7 +123,14 @@ const forms: {
       relatedData={relatedData || { teachers: [], grades: [] }}
     />
   ),
-  lesson: (type, data) => <div>Lesson form not implemented yet</div>,
+  lesson: (type, data, setOpen, relatedData) => (
+    <LessonForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { subjects: [], classes: [], teachers: [] }}
+    />
+  ),
   exam: (type, data, setOpen, relatedData) => (
     <ExamForm
       type={type}
@@ -140,9 +156,21 @@ const forms: {
     />
   ),
   attendance: (type, data) => <div>Attendance form not implemented yet</div>,
-  event: (type, data) => <div>Event form not implemented yet</div>,
-  announcement: (type, data) => (
-    <div>Announcement form not implemented yet</div>
+  event: (type, data, setOpen, relatedData) => (
+    <EventForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { classes: [], teachers: [], students: [] }}
+    />
+  ),
+  announcement: (type, data, setOpen, relatedData) => (
+    <AnnouncementForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+      relatedData={relatedData || { classes: [], teachers: [], students: [] }}
+    />
   ),
 };
 

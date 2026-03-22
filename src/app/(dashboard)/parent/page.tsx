@@ -8,9 +8,10 @@ import { auth } from "@clerk/nextjs/server";
 const ParentPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
   const { userId } = await auth();
+  const resolvedParams = await searchParams;
 
   // Fetch all students belonging to this parent
   const students = await prisma.student.findMany({
@@ -31,7 +32,7 @@ const ParentPage = async ({
   }));
 
   // Determine active child from URL or fallback to first child
-  const requestedChildId = searchParams.childId;
+  const requestedChildId = resolvedParams.childId;
   let activeChild = childrenData.find((c) => c.id === requestedChildId);
 
   if (!activeChild && childrenData.length > 0) {
@@ -74,8 +75,8 @@ const ParentPage = async ({
       
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <EventCalendarContainer searchParams={searchParams} classId={activeChild.classId} />
-        <Announcements classId={activeChild.classId} />
+        <EventCalendarContainer searchParams={resolvedParams} classId={activeChild.classId} />
+        <Announcements classId={activeChild.classId} dateParam={resolvedParams?.date as string | undefined} />
       </div>
     </div>
   );

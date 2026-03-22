@@ -1,10 +1,15 @@
-import BigCalendar from "@/components/bigCalendar";
 import BigCalendarContainer from "@/components/bigCalendarContainer"; 
 import Announcements from "@/components/announcements";
+import EventCalendarContainer from "@/components/eventCalendarContainer";
 import { auth } from "@clerk/nextjs/server";
 
-const teacherPage = async () => {
+const teacherPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) => {
   const { userId } = await auth();
+  const resolvedParams = await searchParams;
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row">
       {/* LEFT */}
@@ -16,7 +21,8 @@ const teacherPage = async () => {
       </div>
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <Announcements />
+        <EventCalendarContainer searchParams={resolvedParams} />
+        <Announcements dateParam={resolvedParams?.date} />
       </div>
     </div>
   );

@@ -100,11 +100,10 @@ const renderRow = (item: TeacherList) => (
     </td>
   </tr>
 );
-const TeacherListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
+const TeacherListPage = async (props: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
+  const searchParams = await props.searchParams;
   const{ page, ...queryParams} = await searchParams;
   const currentPage = Number(page) || 1;
 

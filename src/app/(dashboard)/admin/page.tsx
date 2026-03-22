@@ -26,7 +26,7 @@ const adminPage = async ({
         <div className="flex gap-4 flex-col lg:flex-row">
           {/* COUNT CHART */}
           <div className="w-full lg:w-1/3 h-[450px]">
-            <CountChartContainer />
+            <CountChartContainer date={resolvedSearchParams?.date} />
           </div>
           {/* ATTENDANCE CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
@@ -41,7 +41,7 @@ const adminPage = async ({
       {/* RIGHT */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
          <EventCalendarContainer searchParams={resolvedSearchParams}/>
-        <Announcements />
+        <Announcements dateParam={resolvedSearchParams?.date} />
       </div>
     </div>
   );

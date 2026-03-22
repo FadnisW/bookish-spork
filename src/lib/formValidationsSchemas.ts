@@ -14,6 +14,10 @@ export const classSchema = z.object({
   capacity: z.coerce.number().min(1, { message: "Capacity name is required!" }),
   gradeId: z.coerce.number().min(1, { message: "Grade name is required!" }),
   supervisorId: z.coerce.string().optional(),
+  teachers: z.array(z.object({
+    subjectId: z.coerce.number(),
+    teacherId: z.string()
+  })).optional(),
 });
 
 export type ClassSchema = z.infer<typeof classSchema>;
@@ -164,3 +168,72 @@ export const bulkAttendanceSchema = z.object({
 });
 
 export type BulkAttendanceSchema = z.infer<typeof bulkAttendanceSchema>;
+
+export const lessonSchema = z.object({
+  id: z.coerce.number().optional(),
+  name: z.string().min(1, { message: "Lesson name is required!" }),
+  day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], { message: "Day is required!" }),
+  startTime: z.preprocess((val) => {
+    if (typeof val === 'string' && val.includes(':')) {
+       const today = new Date();
+       const [hours, minutes] = val.split(':');
+       today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+       return today;
+    }
+    return val;
+  }, z.date({ message: "Start time is required!" })),
+  endTime: z.preprocess((val) => {
+    if (typeof val === 'string' && val.includes(':')) {
+       const today = new Date();
+       const [hours, minutes] = val.split(':');
+       today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+       return today;
+    }
+    return val;
+  }, z.date({ message: "End time is required!" })),
+  subjectId: z.coerce.number({ message: "Subject is required!" }),
+  classId: z.coerce.number({ message: "Class is required!" }),
+  teacherId: z.string().min(1, { message: "Teacher is required!" }),
+  room: z.string().optional(),
+  lessonType: z.enum(["LECTURE", "LAB", "SEMINAR"]).optional().default("LECTURE"),
+  status: z.enum(["ACTIVE", "CANCELLED", "SUBSTITUTED"]).optional().default("ACTIVE"),
+  description: z.string().optional(),
+}).refine(data => data.endTime > data.startTime, {
+  message: "End time must be after start time!",
+  path: ["endTime"],
+});
+
+export type LessonSchema = z.infer<typeof lessonSchema>;
+
+export const eventSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required!" }),
+  startTime: z.coerce.date({ message: "Start time is required!" }),
+  endTime: z.coerce.date({ message: "End time is required!" }),
+  classId: z.coerce.number().optional().transform(v => v === 0 ? undefined : v),
+  teacherId: z.string().optional().transform(v => v === "" ? undefined : v),
+  studentId: z.string().optional().transform(v => v === "" ? undefined : v),
+}).refine(data => data.endTime > data.startTime, {
+  message: "End time must be after start time!",
+  path: ["endTime"],
+});
+
+export type EventSchema = z.infer<typeof eventSchema>;
+
+export const announcementSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required!" }),
+  date: z.preprocess((val) => {
+    if (typeof val === 'string' && val.length === 10) {
+      return new Date(`${val}T00:00:00`); // Force local midnight
+    }
+    return val ? new Date(val as string) : val;
+  }, z.date({ message: "Date is required!" })),
+  classId: z.coerce.number().optional().transform(v => v === 0 ? undefined : v),
+  teacherId: z.string().optional().transform(v => v === "" ? undefined : v),
+  studentId: z.string().optional().transform(v => v === "" ? undefined : v),
+});
+
+export type AnnouncementSchema = z.infer<typeof announcementSchema>;

@@ -12,6 +12,9 @@ import {
   BulkResultSchema,
   ParentSchema,
   BulkAttendanceSchema,
+  LessonSchema,
+  EventSchema,
+  AnnouncementSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -123,32 +126,68 @@ export async function deleteSubject(
 
 export async function createClass(data: ClassSchema) {
   try {
-    await prisma.class.create({
-      data,
+    await prisma.$transaction(async (tx) => {
+      const newClass = await tx.class.create({
+        data: {
+          name: data.name,
+          capacity: data.capacity,
+          gradeId: data.gradeId,
+          supervisorId: data.supervisorId,
+        }
+      });
+
+      if (data.teachers && data.teachers.length > 0) {
+        await (tx as any).classTeacherAssignment.createMany({
+          data: data.teachers.map((t: any) => ({
+             classId: newClass.id,
+             teacherId: t.teacherId,
+             subjectId: t.subjectId
+          }))
+        });
+      }
     });
 
     revalidatePath("/list/classes");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
-    return { success: false, error: true };
+    return { success: false, error: true, message: "Failed to create class!" };
   }
 }
 
 export async function updateClass(data: ClassSchema) {
   try {
-    await prisma.class.update({
-      where: {
-        id: data.id,
-      },
-      data,
+    await prisma.$transaction(async (tx) => {
+      await tx.class.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          capacity: data.capacity,
+          gradeId: data.gradeId,
+          supervisorId: data.supervisorId,
+        }
+      });
+
+      await (tx as any).classTeacherAssignment.deleteMany({
+         where: { classId: data.id }
+      });
+
+      if (data.teachers && data.teachers.length > 0) {
+        await (tx as any).classTeacherAssignment.createMany({
+          data: data.teachers.map((t: any) => ({
+             classId: data.id!,
+             teacherId: t.teacherId,
+             subjectId: t.subjectId
+          }))
+        });
+      }
     });
 
     revalidatePath("/list/classes");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
-    return { success: false, error: true };
+    return { success: false, error: true, message: "Failed to update class!" };
   }
 }
 
@@ -664,25 +703,6 @@ export const updateParent = async (data: ParentSchema) => {
   }
 };
 
-export const deleteLesson = async (
-  currentState: CurrentState,
-  data: FormData
-) => {
-  const id = data.get("id") as string;
-  try {
-    await prisma.lesson.delete({
-      where: {
-        id: parseInt(id),
-      },
-    });
-
-    // revalidatePath("/list/lessons");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
-  }
-};
 
 export const createAssignment = async (data: AssignmentSchema) => {
   try {
@@ -1038,45 +1058,7 @@ export const deleteAttendance = async (
   }
 };
 
-export const deleteEvent = async (
-  currentState: CurrentState,
-  data: FormData
-) => {
-  const id = data.get("id") as string;
-  try {
-    await prisma.event.delete({
-      where: {
-        id: parseInt(id),
-      },
-    });
-
-    // revalidatePath("/list/events");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
-  }
-};
-
-export const deleteAnnouncement = async (
-  currentState: CurrentState,
-  data: FormData
-) => {
-  const id = data.get("id") as string;
-  try {
-    await prisma.announcement.delete({
-      where: {
-        id: parseInt(id),
-      },
-    });
-
-    // revalidatePath("/list/announcements");
-    return { success: true, error: false };
-  } catch (err) {
-    console.log(err);
-    return { success: false, error: true };
-  }
-};
+// deleteEvent and deleteAnnouncement are defined at the bottom of this file (Phase 7 full implementations)
 
 export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
   try {
@@ -1104,23 +1086,28 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
     }
 
     // 2. Resolve Lessons to Update
-    let targetLessons: number[] = [];
-    if (lessonId) {
-       targetLessons = [lessonId];
-    } else {
-       // 'Whole Day' logic
-       // Convert Date object to day of week enum (MONDAY, TUESDAY...)
-       const jsDate = new Date(date);
-       const dayOfWeekNum = jsDate.getDay(); // 0 is Sunday, 1 is Monday...
-       const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-       const currentDayString = days[dayOfWeekNum];
-       
-       const todaysLessons = await prisma.lesson.findMany({
-          where: { classId, day: currentDayString as any },
-          select: { id: true, teacherId: true }
-       });
-       targetLessons = todaysLessons.map(l => l.id);
-    }
+     let targetLessonsList: { id: number, teacherId: string }[] = [];
+     
+     if (lessonId) {
+        const singleLesson = await prisma.lesson.findUnique({
+           where: { id: lessonId },
+           select: { id: true, teacherId: true }
+        });
+        if (singleLesson) targetLessonsList = [singleLesson];
+     } else {
+        // Find all lessons for that class on that day
+        const jsDate = new Date(date);
+        const dayOfWeekNum = jsDate.getDay();
+        const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+        const currentDayString = days[dayOfWeekNum];
+        
+        targetLessonsList = await prisma.lesson.findMany({
+           where: { classId, day: currentDayString as any },
+           select: { id: true, teacherId: true }
+        });
+     }
+
+     const targetLessons = targetLessonsList.map(l => l.id);
 
     if (targetLessons.length === 0) {
        return { success: true, error: false, message: "No lessons found for this date/class." };
@@ -1155,7 +1142,9 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
     });
 
     for (const record of records) {
-       for (const targetLessonId of targetLessons) {
+       for (const targetLessonObj of targetLessonsList) {
+          const targetLessonId = targetLessonObj.id;
+          const lessonTeacherId = targetLessonObj.teacherId;
           const mapKey = `${record.studentId}-${targetLessonId}`;
           const existing = existingMap.get(mapKey);
 
@@ -1183,7 +1172,7 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
                })
              );
           } else {
-             operations.push(
+              operations.push(
                prisma.attendance.create({
                   data: {
                      date: startOfDay, // Storing exactly at midnight to avoid tz issues
@@ -1192,7 +1181,7 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
                      minutesLate: record.minutesLate || null,
                      studentId: record.studentId,
                      lessonId: targetLessonId,
-                     teacherId: userId,
+                     teacherId: lessonTeacherId,
                      markedBy: userId,
                      updatedBy: userId,
                      present: record.status === "PRESENT" || record.status === "LATE", // To satisfy legacy schema requirement
@@ -1241,5 +1230,421 @@ export const submitAbsenceNote = async (attendanceId: number, attachmentUrl: str
   } catch (err: any) {
     console.log("[submitAbsenceNote] Error:", err.message || err);
     return { success: false, error: true, message: err.message };
+  }
+};
+
+export const createLesson = async (data: LessonSchema) => {
+  try {
+    if (data.startTime >= data.endTime) {
+      return { success: false, error: true, message: "End time must be after start time." };
+    }
+
+    const dayMap: Record<string, number> = { SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6 };
+    const targetDayOfWeek = dayMap[data.day as string]; 
+    if (targetDayOfWeek === undefined) {
+       return { success: false, error: true, message: "Invalid Day selected." };
+    }
+
+    const baseDate = new Date(1970, 0, 4); 
+    baseDate.setDate(baseDate.getDate() + targetDayOfWeek);
+
+    const shiftToTargetDay = (inputTime: Date) => {
+      const adjustedDate = new Date(baseDate);
+      adjustedDate.setHours(inputTime.getHours(), inputTime.getMinutes(), inputTime.getSeconds());
+      return adjustedDate;
+    };
+
+    const syncedStartTime = shiftToTargetDay(new Date(data.startTime));
+    const syncedEndTime = shiftToTargetDay(new Date(data.endTime));
+
+    const conflictingLesson = await (prisma.lesson.findFirst as any)({
+      where: {
+        day: data.day as any,
+        NOT: { status: "CANCELLED" }, // Cancelled lessons don't conflict
+        OR: [
+          { teacherId: data.teacherId },
+          { classId: data.classId },
+          ...(data.room ? [{ room: data.room }] : [])
+        ],
+        startTime: { lt: syncedEndTime },
+        endTime: { gt: syncedStartTime }
+      },
+      include: {
+        teacher: true,
+        class: true
+      }
+    });
+
+    if (conflictingLesson) {
+      if (conflictingLesson.teacherId === data.teacherId) {
+        return { success: false, error: true, message: `Conflict: Teacher ${conflictingLesson.teacher.name} is scheduled for another lesson.` };
+      }
+      if (conflictingLesson.classId === data.classId) {
+         return { success: false, error: true, message: `Conflict: Class ${conflictingLesson.class.name} is already busy at this time.` };
+      }
+      if (data.room && conflictingLesson.room === data.room) {
+         return { success: false, error: true, message: `Conflict: Room ${data.room} is occupied.` };
+      }
+    }
+
+    await (prisma.lesson.create as any)({
+      data: {
+        name: data.name,
+        day: data.day as any,
+        startTime: syncedStartTime,
+        endTime: syncedEndTime,
+        subjectId: data.subjectId,
+        classId: data.classId,
+        teacherId: data.teacherId,
+        room: data.room || null,
+        lessonType: data.lessonType,
+        status: data.status,
+        description: data.description || null
+      },
+    });
+
+    revalidatePath("/list/lessons");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("createLesson Error: ", err);
+    return { success: false, error: true, message: err.message || "Failed to create Lesson." };
+  }
+};
+
+export const updateLesson = async (data: LessonSchema) => {
+  try {
+    if (!data.id) return { success: false, error: true, message: "Lesson ID missing." };
+    if (data.startTime >= data.endTime) {
+      return { success: false, error: true, message: "End time must be after start time." };
+    }
+
+    const dayMap: Record<string, number> = { SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6 };
+    const targetDayOfWeek = dayMap[data.day as string]; 
+
+    const baseDate = new Date(1970, 0, 4); 
+    baseDate.setDate(baseDate.getDate() + targetDayOfWeek);
+
+    const shiftToTargetDay = (inputTime: Date) => {
+      const adjustedDate = new Date(baseDate);
+      adjustedDate.setHours(inputTime.getHours(), inputTime.getMinutes(), inputTime.getSeconds());
+      return adjustedDate;
+    };
+
+    const syncedStartTime = shiftToTargetDay(new Date(data.startTime));
+    const syncedEndTime = shiftToTargetDay(new Date(data.endTime));
+
+    const conflictingLesson = await (prisma.lesson.findFirst as any)({
+      where: {
+        id: { not: data.id },
+        day: data.day as any,
+        NOT: { status: "CANCELLED" },
+        OR: [
+          { teacherId: data.teacherId },
+          { classId: data.classId },
+          ...(data.room ? [{ room: data.room }] : [])
+        ],
+        startTime: { lt: syncedEndTime },
+        endTime: { gt: syncedStartTime }
+      },
+      include: {
+        teacher: true,
+        class: true
+      }
+    });
+
+    if (conflictingLesson) {
+      if (conflictingLesson.teacherId === data.teacherId) return { success: false, error: true, message: `Conflict: Teacher ${conflictingLesson.teacher.name} is booked.` };
+      if (conflictingLesson.classId === data.classId) return { success: false, error: true, message: `Conflict: Class ${conflictingLesson.class.name} is booked.` };
+      if (data.room && conflictingLesson.room === data.room) return { success: false, error: true, message: `Conflict: Room ${data.room} is occupied.` };
+    }
+
+    await (prisma.lesson.update as any)({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        day: data.day as any,
+        startTime: syncedStartTime,
+        endTime: syncedEndTime,
+        subjectId: data.subjectId,
+        classId: data.classId,
+        teacherId: data.teacherId,
+        room: data.room || null,
+        lessonType: data.lessonType,
+        status: data.status,
+        description: data.description || null
+      },
+    });
+
+    revalidatePath("/list/lessons");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("updateLesson Error: ", err);
+    return { success: false, error: true, message: err.message || "Failed to update Lesson." };
+  }
+};
+
+export const deleteLesson = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const idStr = data.get("id") as string;
+  if (!idStr) return { success: false, error: true, message: "No ID provided." };
+  const id = parseInt(idStr);
+
+  try {
+    // Industrial safety: purge related historical data using transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete associated attendances
+      await tx.attendance.deleteMany({
+        where: { lessonId: id }
+      });
+
+      // 2. Clear assignment/exam results
+      const assignments = await tx.assignment.findMany({ where: { lessonId: id }, select: { id: true }});
+      const assignmentIds = assignments.map(a => a.id);
+      
+      const exams = await tx.exam.findMany({ where: { lessonId: id }, select: { id: true }});
+      const examIds = exams.map(e => e.id);
+
+      if (assignmentIds.length > 0 || examIds.length > 0) {
+        await tx.result.deleteMany({
+          where: {
+            OR: [
+              ...(assignmentIds.length > 0 ? [{ assignmentId: { in: assignmentIds } }] : []),
+              ...(examIds.length > 0 ? [{ examId: { in: examIds } }] : [])
+            ]
+          }
+        });
+      }
+
+      if (assignmentIds.length > 0) await tx.assignment.deleteMany({ where: { lessonId: id } });
+      if (examIds.length > 0) await tx.exam.deleteMany({ where: { lessonId: id } });
+
+      // 3. Delete the lesson itself
+      await tx.lesson.delete({
+        where: { id }
+      });
+    });
+
+    revalidatePath("/list/lessons");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("deleteLesson Error: ", err);
+    return { success: false, error: true, message: "Failed to safely archive the Lesson logic." };
+  }
+};
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+export const createEvent = async (data: EventSchema) => {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.event.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          classId: data.classId || null,
+          teacherId: data.teacherId || null,
+          studentId: data.studentId || null,
+        } as any,
+      });
+      // Phase 8: Emit notification
+      await tx.notification.create({
+        data: {
+          title: `📅 New Event: ${data.title}`,
+          description: data.description,
+          type: "EVENT",
+          classId: data.classId || null,
+          teacherId: data.teacherId || null,
+          studentId: data.studentId || null,
+        },
+      });
+    });
+    revalidatePath("/list/events");
+    revalidatePath("/admin");
+    revalidatePath("/teacher");
+    revalidatePath("/student");
+    revalidatePath("/parent");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[createEvent] Error:", err.message || err);
+    require('fs').appendFileSync('debug.log', '[createEvent] Error: ' + (err.stack || err.message || err) + '\n');
+    return { success: false, error: true };
+  }
+};
+
+export const updateEvent = async (data: EventSchema) => {
+  try {
+    await prisma.event.update({
+      where: { id: data.id },
+      data: {
+        title: data.title,
+        description: data.description,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        classId: data.classId || null,
+        teacherId: data.teacherId || null,
+        studentId: data.studentId || null,
+      } as any,
+    });
+    revalidatePath("/list/events");
+    revalidatePath("/admin");
+    revalidatePath("/teacher");
+    revalidatePath("/student");
+    revalidatePath("/parent");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[updateEvent] Error:", err.message || err);
+    return { success: false, error: true };
+  }
+};
+
+export const deleteEvent = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id");
+  try {
+    await prisma.event.delete({
+      where: { id: parseInt(id as string) },
+    });
+    revalidatePath("/list/events");
+    revalidatePath("/admin");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[deleteEvent] Error:", err.message || err);
+    return { success: false, error: true };
+  }
+};
+
+// ─── ANNOUNCEMENTS ────────────────────────────────────────────────────────────
+
+export const createAnnouncement = async (data: AnnouncementSchema) => {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.announcement.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          classId: data.classId || null,
+          teacherId: data.teacherId || null,
+          studentId: data.studentId || null,
+        } as any,
+      });
+      // Phase 8: Emit notification
+      await tx.notification.create({
+        data: {
+          title: `📢 Announcement: ${data.title}`,
+          description: data.description,
+          type: "ANNOUNCEMENT",
+          classId: data.classId || null,
+          teacherId: data.teacherId || null,
+          studentId: data.studentId || null,
+        },
+      });
+    });
+    revalidatePath("/list/announcements");
+    revalidatePath("/admin");
+    revalidatePath("/teacher");
+    revalidatePath("/student");
+    revalidatePath("/parent");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[createAnnouncement] Error:", err.message || err);
+    require('fs').appendFileSync('debug.log', '[createAnnouncement] Error: ' + (err.stack || err.message || err) + '\n');
+    return { success: false, error: true };
+  }
+};
+
+export const updateAnnouncement = async (data: AnnouncementSchema) => {
+  try {
+    await prisma.announcement.update({
+      where: { id: data.id },
+      data: {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        classId: data.classId || null,
+        teacherId: data.teacherId || null,
+        studentId: data.studentId || null,
+      } as any,
+    });
+    revalidatePath("/list/announcements");
+    revalidatePath("/admin");
+    revalidatePath("/teacher");
+    revalidatePath("/student");
+    revalidatePath("/parent");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[updateAnnouncement] Error:", err.message || err);
+    return { success: false, error: true };
+  }
+};
+
+export const deleteAnnouncement = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id");
+  try {
+    await prisma.announcement.delete({
+      where: { id: parseInt(id as string) },
+    });
+    revalidatePath("/list/announcements");
+    revalidatePath("/admin");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.error("[deleteAnnouncement] Error:", err.message || err);
+    return { success: false, error: true };
+  }
+};
+
+// ─── PHASE 8: NOTIFICATION ENGINE ACTIONS ────────────────────────────────────
+
+/**
+ * Mark a single notification as read for a specific user.
+ * Uses upsert to avoid duplicate rows.
+ */
+export const markNotificationRead = async (
+  notificationId: number,
+  userId: string
+) => {
+  try {
+    await prisma.notificationRead.upsert({
+      where: { notificationId_userId: { notificationId, userId } },
+      update: { readAt: new Date() },
+      create: { notificationId, userId },
+    });
+    revalidatePath("/", "layout"); // Revalidate Navbar count
+    return { success: true };
+  } catch (err: any) {
+    console.error("[markNotificationRead] Error:", err.message || err);
+    return { success: false };
+  }
+};
+
+/**
+ * Mark ALL visible notifications as read for a user.
+ * Fetches the IDs of all visible-but-unread notifications, then batch-upserts.
+ */
+export const markAllNotificationsRead = async (
+  userId: string,
+  role: string,
+  visibleIds: number[]
+) => {
+  try {
+    if (visibleIds.length === 0) return { success: true };
+    await prisma.notificationRead.createMany({
+      data: visibleIds.map((notificationId) => ({ notificationId, userId })),
+      skipDuplicates: true,
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err: any) {
+    console.error("[markAllNotificationsRead] Error:", err.message || err);
+    return { success: false };
   }
 };

@@ -47,7 +47,7 @@ const columns = [
 const ClassListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
   const { page, ...queryParams } = await searchParams;
   const currentPage = Number(page) || 1;
@@ -80,7 +80,8 @@ const ClassListPage = async ({
       where: query,
       include: {
         supervisor: true,
-      },
+        curriculum: true,
+      } as any,
       orderBy: {
         id: "asc",
       },
@@ -92,9 +93,10 @@ const ClassListPage = async ({
     }),
   ]);
 
-  const [teachers, grades] = await Promise.all([
-    getAllTeachers(),
-    getAllGrades(),
+  const [teachers, grades, subjects] = await prisma.$transaction([
+    prisma.teacher.findMany({ select: { id: true, name: true, surname: true, subjects: { select: { id: true } } } }),
+    prisma.grade.findMany({ select: { id: true, level: true } }),
+    prisma.subject.findMany({ select: { id: true, name: true } })
   ]);
 
   return (
@@ -111,7 +113,7 @@ const ClassListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal table="class" type="create" relatedData={{ teachers, grades }} />}
+            {role === "admin" && <FormModal table="class" type="create" relatedData={{ teachers, grades, subjects }} />}
           </div>
         </div>
       </div>
