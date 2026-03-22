@@ -1,0 +1,219 @@
+﻿
+> education-dashboard@0.1.0 build
+> next build
+
+   Γû▓ Next.js 15.1.7
+   - Environments: .env
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (F  
+  ailed to compile.:Str   
+ ing) [], RemoteExcept    
+ion
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+./src/lib/prisma.ts
+Module not found: Can't 
+resolve '@prisma/client'
+
+https://nextjs.org/docs/me
+ssages/module-not-found
+
+Import trace for 
+requested module:
+./src/lib/actions.ts
+./node_modules/next/dist/b
+uild/webpack/loaders/next-
+flight-action-entry-loader
+.js?actions=%5B%5B%22D%3A%
+5C%5CSaaS_Application_Deve
+lopment%5C%5Cfull-stack-sc
+hool%5C%5Cbookish-spork%5C
+%5Cnode_modules%5C%5C%40cl
+erk%5C%5Cnextjs%5C%5Cdist%
+5C%5Cesm%5C%5Capp-router%5
+C%5Cserver-actions.js%22%2
+C%5B%5B%227f681d27a6868afd
+fd6c802650b5fa3bbf9de976a2
+%22%2C%22invalidateCacheAc
+tion%22%5D%5D%5D%2C%5B%22D
+%3A%5C%5CSaaS_Application_
+Development%5C%5Cfull-stac
+k-school%5C%5Cbookish-spor
+k%5C%5Csrc%5C%5Clib%5C%5Ca
+ctions.ts%22%2C%5B%5B%2200
+1fafecd385cd28d98eab94a3d4
+3eed5714033d02%22%2C%22get
+AllSubjects%22%5D%2C%5B%22
+003e5f0716e47881fabf05ecf4
+144bef9562d39ded%22%2C%22g
+etAllGrades%22%5D%2C%5B%22
+006b099efccd26d6a5adbb2efd
+aaf726f57312f2e4%22%2C%22g
+etAllClasses%22%5D%2C%5B%2
+200902f7e50428c5d6621de8c2
+e63a409daca9a7828%22%2C%22
+getAllTeachers%22%5D%2C%5B
+%224062521dc22b64cff2ebf57
+5650ff1a5aa6e0e99e9%22%2C%
+22getAllLessons%22%5D%2C%5
+B%2240913d77962fffd9baabf4
+8eee1089ee7268b60695%22%2C
+%22createSubject%22%5D%2C%
+5B%22409df7e632e4e9f95f52e
+1ba12b7e77c58ec6a6a18%22%2
+C%22createClass%22%5D%2C%5
+B%2240aa64158e4f238d653278
+31195acd2ee853e66ffd%22%2C
+%22updateClass%22%5D%2C%5B
+%2240d2b49a7dfb5539da4341b
+265b07af2fdc34900af%22%2C%
+22updateSubject%22%5D%2C%5
+B%2260c5ac47da35ca042e5bb6
+a2bf32404ef209e97584%22%2C
+%22deleteSubject%22%5D%2C%
+5B%227f06ba14abc1d68b55419
+530bffe9b01d3d045c57e%22%2
+C%22createAssignment%22%5D
+%2C%5B%227f140471082c1bcdd
+2dece6033f43682a7686bf26f%
+22%2C%22createTeacher%22%5
+D%2C%5B%227f143fd56bc35b9e
+4d4d4f221a709d56eb0556db5a
+%22%2C%22createLesson%22%5
+D%2C%5B%227f1474c864026398
+78869598e69ccbf3a76b46f92f
+%22%2C%22createAnnouncemen
+t%22%5D%2C%5B%227f2e112cdc
+1352752abd6535ec494872e251
+5766e2%22%2C%22updateResul
+t%22%5D%2C%5B%227f2fb2b0a2
+9c219fc7778653614b5cac4c98
+575ce8%22%2C%22deleteAssig
+nment%22%5D%2C%5B%227f31dc
+6b4b4b4e58a5d70b1992dd8bcc
+43cafa7d52%22%2C%22saveBul
+kAttendance%22%5D%2C%5B%22
+7f34032d98199427b439cf496b
+33db91f49d664798%22%2C%22d
+eleteEvent%22%5D%2C%5B%227
+f4254d4e654b3712117aa48d33
+e0c12a70893ce3e%22%2C%22de
+leteClass%22%5D%2C%5B%227f
+45f172585cbcba9aad824c349a
+5cc740e2b3b65f%22%2C%22sub
+mitAbsenceNote%22%5D%2C%5B
+%227f4a4aa2c9b485091e0c9fd
+db9ff1955b02bf48cb0%22%2C%
+22updateTeacher%22%5D%2C%5
+B%227f4ba6109da163380e35b9
+56ac0dcece993925c3eb%22%2C
+%22createExam%22%5D%2C%5B%
+227f4df4064962ab58cd57632b
+cd42b8e8083a04ef00%22%2C%2
+2saveBulkResults%22%5D%2C%
+5B%227f5428eee07b93b3176df
+2ed3e0de1d0eaef980b8a%22%2
+C%22updateParent%22%5D%2C%
+5B%227f5a515c5a2945ed7d9c9
+3addd2c041e7ba565cabc%22%2
+C%22updateStudent%22%5D%2C
+%5B%227f63e482aaa39cba23af
+9a9d3439d47560db08510f%22%
+2C%22markNotificationRead%
+22%5D%2C%5B%227f6eec3a1685
+daa95556dc4ed024831e35bc52
+6661%22%2C%22deleteTeacher
+%22%5D%2C%5B%227f7464ecd70
+b90232b1757f4bda64ddccd53a
+211f3%22%2C%22deleteAnnoun
+cement%22%5D%2C%5B%227f76d
+0071c53ddc228e88e727d92700
+3a9da2c2982%22%2C%22create
+Result%22%5D%2C%5B%227f78c
+4b43f7ee6189c7f31ceaba2830
+6fbd33dea94%22%2C%22create
+Student%22%5D%2C%5B%227f7d
+247b35c0896c685ef658f3668c
+7c9b45664bf1%22%2C%22creat
+eParent%22%5D%2C%5B%227f83
+c3a86671c6442e7292ae5d51e1
+21bce6009174%22%2C%22getPr
+ofileData%22%5D%2C%5B%227f
+8ef0f0cc82686c53ac6581d9ba
+b42c7d210dc290%22%2C%22del
+eteParent%22%5D%2C%5B%227f
+942369a105aa6c51ff4e0aa222
+7dc87c19bf5f97%22%2C%22cre
+ateSchoolException%22%5D%2
+C%5B%227f971ccf2b16404a624
+e37cf19ea5f4c97fec2bfe0%22
+%2C%22deleteLesson%22%5D%2
+C%5B%227f9cd5e8b5eb7547d16
+84f08ac5ec47078d2a8ec7d%22
+%2C%22deleteAttendance%22%
+5D%2C%5B%227fb5afe317cfd11
+b7dcd7724c5199a227c80507f5
+9%22%2C%22deleteExam%22%5D
+%2C%5B%227fb85fe1f06c7178f
+907fdc13362eec4d82f1cfed5%
+22%2C%22deleteStudent%22%5
+D%2C%5B%227fc310b554669943
+54b2836bda0eb9a8a5e3c1f45a
+%22%2C%22updateAssignment%
+22%5D%2C%5B%227fd19fb62f3a
+cd1bf468dc0973177267921178
+8abd%22%2C%22deleteSchoolE
+xception%22%5D%2C%5B%227fd
+1ae700f70f007d661bd993dd1c
+27cf6e08dbf35%22%2C%22dele
+teResult%22%5D%2C%5B%227fd
+328a182bf8fc53756db9e68c4b
+6274c67fdf0eb%22%2C%22crea
+teEvent%22%5D%2C%5B%227fd7
+c40bfad710da0a216602b9f611
+689d7114ead3%22%2C%22markA
+llNotificationsRead%22%5D%
+2C%5B%227fe0ffa12ecec4d770
+fe527d359a6cccaba1d50ed7%2
+2%2C%22updateLesson%22%5D%
+2C%5B%227fe272ef90f25d9f7e
+1099ada10cf5b150e5763c5f%2
+2%2C%22updateEvent%22%5D%2
+C%5B%227fed72faaea9e2ab2b8
+e165c36b59d7455f474f54a%22
+%2C%22updateExam%22%5D%2C%
+5B%227ff889ce36c87e5499fef
+f8d116eaa544d06439124%22%2
+C%22updateAnnouncement%22%
+5D%5D%5D%5D&__client_impor
+ted__=true!
+
+./src/lib/prisma.ts
+Module not found: Can't 
+resolve '@prisma/client'
+
+https://nextjs.org/docs/me
+ssages/module-not-found
+
+Import trace for 
+requested module:
+./src/app/(dashboard)/list
+/announcements/page.tsx
+
+
+> Build failed because of 
+webpack errors
