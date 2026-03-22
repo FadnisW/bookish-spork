@@ -2,7 +2,7 @@ import FormModal from "@/components/formModal";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
-import { role, currentUserId } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Attendance, Prisma, Student, Lesson, Teacher } from "@prisma/client";
@@ -10,7 +10,6 @@ import Image from "next/image";
 import AttendanceFilters from "@/components/AttendanceFilters";
 import AttendanceSpreadsheet from "@/components/AttendanceSpreadsheet";
 import ConsumerAttendanceDashboard from "@/components/ConsumerAttendanceDashboard";
-import { auth } from "@clerk/nextjs/server";
 
 type AttendanceList = Attendance & {
   student: Student;
@@ -188,7 +187,10 @@ const AttendanceListPage = async (props: {
   // CONSUMER VIEW (Student & Parent) - Legacy List (Will be replaced in Phase 3)
   // ==========================================
   const { page, ...queryParams } = searchParams;
-  const currentPage = Number(page) || 1;
+  const currentPage = Number(page) || 1; // Keep currentPage as it was, as the instruction's replacement was syntactically incorrect.
+  // The auth() call and role derivation are already done at the top of the function.
+  // const { userId: currentUserId, sessionClaims } = await auth(); // This line is redundant as auth() is called above.
+  // const role = (sessionClaims?.metadata as { role?: string })?.role; // This line is redundant as role is derived above.
   const query: Prisma.AttendanceWhereInput = {};
   
   if (role === "student") query.studentId = userId!;

@@ -3,7 +3,7 @@ import FormContainer from "@/components/formContainer";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
-import { role } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Prisma, Class, Teacher } from "@prisma/client";
@@ -14,35 +14,7 @@ type ClassList = Class & {
   supervisor: Teacher;
 }
 
-const columns = [
-  {
-    header: "Class Name",
-    accessor: "name",
-  },
-  {
-    header: "Capacity",
-    accessor: "capacity",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Grade",
-    accessor: "grade",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Supervisor",
-    accessor: "supervisor",
-    className: "hidden md:table-cell",
-  },
-  ...(role === "admin"
-    ? [
-      {
-        header: "Actions",
-        accessor: "action",
-      },
-    ]
-    : []),
-];
+
 
 const ClassListPage = async ({
   searchParams,
@@ -52,7 +24,39 @@ const ClassListPage = async ({
   const { page, ...queryParams } = await searchParams;
   const currentPage = Number(page) || 1;
 
-  //Settingup Url Conditions
+  const { sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  const columns = [
+    {
+      header: "Class Name",
+      accessor: "name",
+    },
+    {
+      header: "Capacity",
+      accessor: "capacity",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Grade",
+      accessor: "grade",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Supervisor",
+      accessor: "supervisor",
+      className: "hidden md:table-cell",
+    },
+    ...(role === "admin"
+      ? [
+        {
+          header: "Actions",
+          accessor: "action",
+        },
+      ]
+      : []),
+  ];
+
   const query: Prisma.ClassWhereInput = {};
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {

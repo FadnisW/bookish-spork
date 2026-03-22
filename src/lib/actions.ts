@@ -1648,3 +1648,123 @@ export const markAllNotificationsRead = async (
     return { success: false };
   }
 };
+
+/**
+ * -------------------------------------------------------------
+ * PHASE 9: PROFILE AND SETTINGS ACTIONS
+ * -------------------------------------------------------------
+ */
+
+export const getProfileData = async (userId: string, role: string) => {
+  try {
+    const today = new Date();
+    const academicYearStart = new Date(today.getFullYear(), 0, 1);
+
+    switch (role) {
+      case "student":
+        const student = await prisma.student.findUnique({
+          where: { id: userId },
+          include: {
+            class: {
+              include: {
+                _count: { select: { lessons: true, students: true } },
+                lessons: {
+                  select: {
+                    subject: true,
+                    teacher: true,
+                    _count: { select: { exams: true, assignments: true } },
+                  },
+                },
+              },
+            },
+            grade: true,
+            parent: { select: { name: true, surname: true, phone: true } },
+            results: {
+              include: {
+                exam: { include: { lesson: { include: { subject: true } } } },
+                assignment: { include: { lesson: { include: { subject: true } } } },
+              },
+            },
+            attendances: {
+              where: { date: { gte: academicYearStart } },
+              orderBy: { date: "desc" },
+            },
+            _count: { select: { attendances: true, results: true } },
+          },
+        });
+        return { success: true, data: student };
+
+      case "teacher":
+        const teacher = await prisma.teacher.findUnique({
+          where: { id: userId },
+          include: {
+            subjects: true,
+            classes: { select: { id: true, name: true, _count: { select: { students: true } } } },
+            lessons: {
+              include: {
+                subject: true,
+                class: { select: { id: true, name: true } },
+                _count: { select: { exams: true, assignments: true, attendances: true } },
+              },
+            },
+            _count: { select: { subjects: true, lessons: true, classes: true } },
+          },
+        });
+        return { success: true, data: teacher };
+
+      case "parent":
+        const parent = await prisma.parent.findUnique({
+          where: { id: userId },
+          include: {
+            students: {
+              include: {
+                class: true,
+                grade: true,
+                _count: { select: { attendances: true, results: true } },
+                attendances: {
+                  where: { date: { gte: academicYearStart } },
+                },
+                results: {
+                  include: {
+                    exam: { include: { lesson: { include: { subject: true } } } },
+                    assignment: { include: { lesson: { include: { subject: true } } } },
+                  },
+                },
+              },
+            },
+          },
+        });
+        return { success: true, data: parent };
+
+      case "admin":
+        const [studentCount, teacherCount, parentCount, classCount] = await Promise.all([
+          prisma.student.count(),
+          prisma.teacher.count(),
+          prisma.parent.count(),
+          prisma.class.count(),
+        ]);
+        const admin = await prisma.admin.findUnique({
+          where: { id: userId },
+        });
+        return {
+          success: true,
+          data: {
+            ...admin,
+            _count: {
+              students: studentCount,
+              teachers: teacherCount,
+              parents: parentCount,
+              classes: classCount,
+            },
+          },
+        };
+
+      default:
+        return { success: false, message: "Invalid role" };
+    }
+  } catch (err) {
+    console.error("[getProfileData] Error:", err);
+    return { success: false, message: "Failed to fetch profile data" };
+  }
+};
+

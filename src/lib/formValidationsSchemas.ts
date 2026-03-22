@@ -191,8 +191,8 @@ export const lessonSchema = z.object({
     }
     return val;
   }, z.date({ message: "End time is required!" })),
-  subjectId: z.coerce.number({ message: "Subject is required!" }),
-  classId: z.coerce.number({ message: "Class is required!" }),
+  subjectId: z.coerce.number({ message: "Subject is required!" }).min(1, { message: "Subject is required!" }),
+  classId: z.coerce.number({ message: "Class is required!" }).min(1, { message: "Class is required!" }),
   teacherId: z.string().min(1, { message: "Teacher is required!" }),
   room: z.string().optional(),
   lessonType: z.enum(["LECTURE", "LAB", "SEMINAR"]).optional().default("LECTURE"),

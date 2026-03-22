@@ -53,13 +53,13 @@ const BigCalendar = ({
         events={data}
         startAccessor="start"
         endAccessor="end"
-        views={isMobile ? ["work_week","day"] : ["work_week", "day"]}// Make changes here, make sure mobile users are only able to view day view not month view
+        views={isMobile ? ["day"] : ["work_week", "day"]}
         view={view}
         style={{ height: "100%" }}
         onView={handleOnChangeView}
         defaultDate={new Date()}
-        min={new Date(0, 0, 0, 7, 0, 0)}
-        max={new Date(0, 0, 0, 23, 0, 0)}
+        step={30}
+        timeslots={2}
         toolbar={true}
         className="responsive-calendar"
       />

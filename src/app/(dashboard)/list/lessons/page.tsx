@@ -2,7 +2,7 @@ import FormModal from "@/components/formModal";
 import Pagination from "@/components/pagination";
 import Table from "@/components/table";
 import TableSearch from "@/components/tableSearch";
-import { currentUserId, role } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
@@ -10,39 +10,7 @@ import Image from "next/image";
 
 type LessonList = Lesson & {class:Class} & {teacher:Teacher} & {subject:Subject}
 
-const columns = [
-  {
-    header: "Subject Name",
-    accessor: "name",
-  },
-  {
-    header: "Class",
-    accessor: "class",
-  },
-  {
-    header: "Teacher",
-    accessor: "teacher",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Room",
-    accessor: "room",
-    className: "hidden lg:table-cell",
-  },
-  {
-    header: "Schedule",
-    accessor: "schedule",
-    className: "hidden lg:table-cell",
-  },
-  ...(role === "admin"
-    ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
-    : []),
-];
+
 
 const LessonListPage = async (props: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -50,6 +18,43 @@ const LessonListPage = async (props: {
   const searchParams = await props.searchParams;
   const{ page, ...queryParams} = await searchParams;
   const currentPage = Number(page) || 1;
+
+  const { userId: currentUserId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  
+  const columns = [
+    {
+      header: "Subject Name",
+      accessor: "name",
+    },
+    {
+      header: "Class",
+      accessor: "class",
+    },
+    {
+      header: "Teacher",
+      accessor: "teacher",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Room",
+      accessor: "room",
+      className: "hidden lg:table-cell",
+    },
+    {
+      header: "Schedule",
+      accessor: "schedule",
+      className: "hidden lg:table-cell",
+    },
+    ...(role === "admin"
+      ? [
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
+      : []),
+  ];
 
   //Settingup Url Conditions
   const query: Prisma.LessonWhereInput = {};

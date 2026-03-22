@@ -134,8 +134,9 @@ const AttendanceSpreadsheet = ({
       </div>
 
       {/* High-Density Spreadsheet Grid */}
-      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
-         <div className="grid grid-cols-12 bg-gray-50 p-4 border-b border-gray-100 font-semibold text-gray-500 text-sm uppercase tracking-wide">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-x-auto no-scrollbar">
+         <div className="min-w-[800px]">
+           <div className="grid grid-cols-12 bg-gray-50 p-4 border-b border-gray-100 font-semibold text-gray-500 text-sm uppercase tracking-wide">
             <div className="col-span-3">Student</div>
             <div className="col-span-4 pl-4">Status / Quick Select</div>
             <div className="col-span-2">Tardy Depth</div>
@@ -205,6 +206,7 @@ const AttendanceSpreadsheet = ({
                  </div>
                );
             })}
+         </div>
          </div>
       </div>
 

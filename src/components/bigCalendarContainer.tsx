@@ -11,17 +11,25 @@ const getLatestMonday = (): Date => {
 };
 
 export const adjustScheduleToCurrentWeek = (
-  lessons: { title: string; start: Date; end: Date }[]
+  lessons: { title: string; start: Date; end: Date; day: string }[]
 ): { title: string; start: Date; end: Date }[] => {
   const latestMonday = getLatestMonday();
 
-  return lessons.map((lesson) => {
-    const lessonDayOfWeek = lesson.start.getDay();
+  const dayMap: Record<string, number> = {
+    MONDAY: 0,
+    TUESDAY: 1,
+    WEDNESDAY: 2,
+    THURSDAY: 3,
+    FRIDAY: 4,
+    SATURDAY: 5,
+    SUNDAY: 6,
+  };
 
-    const daysFromMonday = lessonDayOfWeek === 0 ? 6 : lessonDayOfWeek - 1;
+  return lessons.map((lesson) => {
+    // CRITICAL: We map exactly via the DB 'day' column, entirely bypassing the arbitrary dates provided by default Prisma Date objects!
+    const daysFromMonday = dayMap[lesson.day] !== undefined ? dayMap[lesson.day] : 0;
 
     const adjustedStartDate = new Date(latestMonday);
-
     adjustedStartDate.setDate(latestMonday.getDate() + daysFromMonday);
     adjustedStartDate.setHours(
       lesson.start.getHours(),
@@ -61,6 +69,7 @@ const BigCalendarContainer = async ({
     title: lesson.name,
     start: lesson.startTime,
     end: lesson.endTime,
+    day: lesson.day,
   }));
 
   const schedule = adjustScheduleToCurrentWeek(data);
