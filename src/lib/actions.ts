@@ -15,6 +15,7 @@ import {
   LessonSchema,
   EventSchema,
   AnnouncementSchema,
+  SchoolExceptionSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -1768,3 +1769,57 @@ export const getProfileData = async (userId: string, role: string) => {
   }
 };
 
+// ─── PHASE 12: GLOBAL HOLIDAYS & EXCEPTIONS ───────────────────────────────────
+
+export const createSchoolException = async (data: SchoolExceptionSchema) => {
+  try {
+    const { sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    if (role !== "admin") {
+      return { success: false, error: true, message: "Only administrators can declare global school exceptions!" };
+    }
+
+    await prisma.schoolException.create({
+      data: {
+        startDate: data.startDate,
+        endDate: data.endDate,
+        reason: data.reason,
+      },
+    });
+
+    revalidatePath("/list/attendance");
+    return { success: true, error: false, message: "" };
+  } catch (err: any) {
+    console.log("[createSchoolException] Error:", err.message || err);
+    return { success: false, error: true, message: err.message || "Failed to create school exception" };
+  }
+};
+
+export const deleteSchoolException = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+
+  try {
+    const { sessionClaims } = await auth();
+    const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+    if (role !== "admin") {
+      return { success: false, error: true, message: "Only administrators can delete global school exceptions!" };
+    }
+
+    await prisma.schoolException.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    revalidatePath("/list/attendance");
+    return { success: true, error: false };
+  } catch (err: any) {
+    console.log("[deleteSchoolException] Error:", err.message || err);
+    return { success: false, error: true };
+  }
+};

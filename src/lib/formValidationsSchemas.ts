@@ -235,5 +235,18 @@ export const announcementSchema = z.object({
   teacherId: z.string().optional().transform(v => v === "" ? undefined : v),
   studentId: z.string().optional().transform(v => v === "" ? undefined : v),
 });
-
 export type AnnouncementSchema = z.infer<typeof announcementSchema>;
+
+// ─── PHASE 12: GLOBAL HOLIDAYS & EXCEPTIONS ───────────────────────────────────
+
+export const schoolExceptionSchema = z.object({
+  id: z.coerce.number().optional(),
+  startDate: z.coerce.date({ message: "Start date is required!" }),
+  endDate: z.coerce.date({ message: "End date is required!" }),
+  reason: z.string().min(1, { message: "Reason is required!" }),
+}).refine(data => data.endDate >= data.startDate, {
+  message: "End date must be the same or after start date!",
+  path: ["endDate"],
+});
+
+export type SchoolExceptionSchema = z.infer<typeof schoolExceptionSchema>;

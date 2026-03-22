@@ -99,6 +99,7 @@ const AttendanceListPage = async (props: {
 
      // 2. Determine Spreadsheet State
      let spreadsheetData = null;
+     let holidayReason: string | null = null;
      if (date && classId && lessonId) {
         const students = await prisma.student.findMany({
            where: { classId: parseInt(classId) },
@@ -124,6 +125,27 @@ const AttendanceListPage = async (props: {
              targetLessons = clsLessons.map(l => l.id);
            }
            // dayNum === 0 (Sunday) → targetLessons stays [], page shows empty state
+        }
+        if (date) {
+          const jsDate = new Date(date);
+          const dayNum = jsDate.getDay();
+          
+          if (dayNum === 0) {
+            holidayReason = "Holiday because it's Sunday by default.";
+          } else {
+            const startOfDay = new Date(new Date(date).setHours(0,0,0,0));
+            const endOfDay = new Date(new Date(date).setHours(23,59,59,999));
+            
+            const exception = await prisma.schoolException.findFirst({
+              where: {
+                startDate: { lte: endOfDay },
+                endDate: { gte: startOfDay },
+              }
+            });
+            if (exception) {
+              holidayReason = exception.reason;
+            }
+          }
         }
 
         const startOfDay = new Date(new Date(date).setHours(0,0,0,0));
@@ -162,7 +184,12 @@ const AttendanceListPage = async (props: {
 
      return (
        <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0 min-h-[70vh]">
-          <h1 className="text-xl font-bold mb-4 text-gray-800">Attendance Registry</h1>
+          <div className="flex justify-between items-center mb-4">
+             <h1 className="text-xl font-bold text-gray-800">Attendance Registry</h1>
+             {role === "admin" && (
+                <FormModal table="schoolException" type="create" />
+             )}
+          </div>
           <AttendanceFilters classes={classes} lessons={lessons as any} currentUserId={userId!} role={role} />
           
           {spreadsheetData ? (
@@ -170,7 +197,8 @@ const AttendanceListPage = async (props: {
                students={spreadsheetData as any} 
                classId={parseInt(classId!)} 
                date={date!} 
-               lessonId={lessonId === "whole_day" ? undefined : parseInt(lessonId!)} 
+               lessonId={lessonId === "whole_day" ? undefined : parseInt(lessonId!)}
+               holidayReason={holidayReason}
              />
           ) : (
              <div className="w-full flex flex-col items-center justify-center p-12 mt-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-md">

@@ -260,8 +260,6 @@ model ClassTeacherAssignment {
   @@unique([classId, subjectId]) // Ensures one subject per class has only one teacher
 }
 
-// ─── PHASE 8: UNIVERSAL NOTIFICATION ENGINE ───────────────────────────────────
-
 enum NotificationType {
   ANNOUNCEMENT
   EVENT
@@ -300,4 +298,12 @@ model NotificationRead {
 
   @@unique([notificationId, userId])
   @@index([userId])
+}
+
+model SchoolException {
+  id        Int      @id @default(autoincrement())
+  startDate DateTime
+  endDate   DateTime
+  reason    String
+  createdAt DateTime @default(now())
 }
