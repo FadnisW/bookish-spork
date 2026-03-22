@@ -35,7 +35,7 @@ const StudentForm = ({
   const classes = relatedData?.classes || [];
 
   const onSubmit = handleSubmit(async (values) => {
-    const state = await studentAction(values);
+    const state = await studentAction({ ...values, img: img?.secure_url || data?.img });
     if (state.success) {
       setOpen(false);
       toast.success(`Student has been ${type === "create" ? "created" : "updated"}!`);

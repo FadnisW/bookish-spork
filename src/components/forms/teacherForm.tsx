@@ -34,7 +34,7 @@ const TeacherForm = ({
   const subjects = relatedData?.subjects || [];
 
   const onSubmit = handleSubmit(async (values) => {
-    const state = await teacherAction(values);
+    const state = await teacherAction({ ...values, img: img?.secure_url || data?.img });
     if (state.success) {
       setOpen(false);
       toast.success(`Teacher has been ${type === "create" ? "created" : "updated"}!`);
