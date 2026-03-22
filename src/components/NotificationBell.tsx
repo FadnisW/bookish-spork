@@ -168,14 +168,16 @@ export default function NotificationBell({
                       <span className="text-[10px] text-gray-400 mt-1 block">{timeAgo(n.createdAt)}</span>
                     </div>
 
-                    {/* ── Hover Tooltip ─────────────────────────────────── */}
+                    {/* ── Hover Tooltip (Left Side) ────────────────────── */}
                     {n.description && (
-                      <div className="absolute left-4 right-4 top-full z-10 pointer-events-none
-                        opacity-0 group-hover:opacity-90 translate-y-1 group-hover:translate-y-0
-                        transition-all duration-200 ease-out">
-                        <div className="bg-gray-900/80 backdrop-blur-sm text-white text-xs
-                          rounded-lg px-3 py-2 shadow-lg leading-relaxed max-h-20 overflow-hidden">
-                          {n.description.length > 120 ? n.description.slice(0, 120) + "…" : n.description}
+                      <div className="absolute right-full top-2 z-[60] mr-3 pointer-events-none
+                        opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0
+                        transition-all duration-300 ease-out origin-right w-64">
+                        <div className="bg-white border border-gray-100 text-gray-800 text-xs
+                          rounded-xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] leading-relaxed relative
+                          before:content-[''] before:absolute before:top-4 before:-right-1.5 before:w-3 before:h-3
+                          before:bg-white before:rotate-45 before:border-r before:border-t before:border-gray-100">
+                          {n.description.length > 80 ? n.description.slice(0, 80) + "…" : n.description}
                         </div>
                       </div>
                     )}
