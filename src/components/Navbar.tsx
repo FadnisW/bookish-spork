@@ -49,7 +49,7 @@ const Navbar = async () => {
 
   if (userId) {
     try {
-      const rawNotifications = await (prisma as any).notification.findMany({
+      const rawNotifications = await prisma.notification.findMany({
         where: visibilityFilter,
         orderBy: { createdAt: 'desc' },
         take: 20,

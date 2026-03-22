@@ -151,7 +151,7 @@ export default function NotificationBell({
                   <li
                     key={n.id}
                     onClick={() => !n.isRead && handleMarkRead(n.id)}
-                    className={`flex gap-3 p-4 border-l-4 ${cfg.color}
+                    className={`relative group flex gap-3 p-4 border-l-4 ${cfg.color}
                       ${!n.isRead ? `${cfg.bg} cursor-pointer hover:brightness-95` : "bg-white opacity-70"}
                       transition-all duration-200`}
                   >
@@ -165,11 +165,20 @@ export default function NotificationBell({
                           <span className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-500 mt-1" />
                         )}
                       </div>
-                      {n.description && (
-                        <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{n.description}</p>
-                      )}
                       <span className="text-[10px] text-gray-400 mt-1 block">{timeAgo(n.createdAt)}</span>
                     </div>
+
+                    {/* ── Hover Tooltip ─────────────────────────────────── */}
+                    {n.description && (
+                      <div className="absolute left-4 right-4 top-full z-10 pointer-events-none
+                        opacity-0 group-hover:opacity-90 translate-y-1 group-hover:translate-y-0
+                        transition-all duration-200 ease-out">
+                        <div className="bg-gray-900/80 backdrop-blur-sm text-white text-xs
+                          rounded-lg px-3 py-2 shadow-lg leading-relaxed max-h-20 overflow-hidden">
+                          {n.description.length > 120 ? n.description.slice(0, 120) + "…" : n.description}
+                        </div>
+                      </div>
+                    )}
                   </li>
                 );
               })}
