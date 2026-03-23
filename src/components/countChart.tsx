@@ -27,7 +27,7 @@ const CountChart = ({
   ];
   return (
     <div className="relative w-full h-[65%] mt-2">
-      <ResponsiveContainer>
+      <ResponsiveContainer width="99%" height="99%">
         <RadialBarChart
           cx="50%"
           cy="85%"

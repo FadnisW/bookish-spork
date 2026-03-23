@@ -18,7 +18,7 @@ const AttendanceChart = ({
   data: { name: string; present: number; absent: number }[];
 }) => {
   return (
-    <ResponsiveContainer width="100%" height="90%">
+    <ResponsiveContainer width="99%" height="90%">
       <BarChart width={500} height={300} data={data} barSize={20}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
         <XAxis
