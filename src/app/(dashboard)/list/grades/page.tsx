@@ -41,10 +41,7 @@ const GradeListPage = async ({
       if (value !== undefined) {
         switch (key) {
           case "search":
-            const num = parseInt(value);
-            if (!isNaN(num)) {
-              query.level = { equals: num };
-            }
+            query.level = { contains: value, mode: "insensitive" };
             break;
           default:
             break;

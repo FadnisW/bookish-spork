@@ -47,10 +47,10 @@ const GradeForm = ({
       </h1>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Grade Level (Number)"
+          label="Grade Level"
           name="level"
-          type="number"
-          defaultValue={data?.level?.toString?.()}
+          type="text"
+          defaultValue={data?.level}
           register={register}
           error={errors?.level}
         />
