@@ -114,6 +114,14 @@ const ParentForm = ({
             error={errors?.id}
           />
         )}
+        {type === "update" && data?.id && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-500">Parent ID</label>
+            <p className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm text-gray-500 bg-gray-50 cursor-not-allowed break-all">
+              {data.id}
+            </p>
+          </div>
+        )}
       </div>
       <button className="bg-blue-400 text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
