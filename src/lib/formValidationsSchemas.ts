@@ -22,6 +22,13 @@ export const classSchema = z.object({
 
 export type ClassSchema = z.infer<typeof classSchema>;
 
+export const gradeSchema = z.object({
+  id: z.coerce.number().optional(),
+  level: z.coerce.number().min(1, { message: "Level is required!" }),
+});
+
+export type GradeSchema = z.infer<typeof gradeSchema>;
+
 export const teacherSchema = z.object({
   id: z.string().optional(),
   username: z

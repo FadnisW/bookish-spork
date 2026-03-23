@@ -16,6 +16,7 @@ import {
   EventSchema,
   AnnouncementSchema,
   SchoolExceptionSchema,
+  GradeSchema,
 } from "./formValidationsSchemas";
 import prisma from "./prisma";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -124,6 +125,55 @@ export async function deleteSubject(
     return { success: false, error: true };
   }
 }
+
+export async function createGrade(data: GradeSchema) {
+  try {
+    await prisma.grade.create({
+      data: {
+        level: data.level,
+      },
+    });
+    revalidatePath("/list/grades");
+    return { success: true, error: false };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: true, message: "Failed to create grade. Level might already exist." };
+  }
+}
+
+export async function updateGrade(data: GradeSchema) {
+  try {
+    await prisma.grade.update({
+      where: { id: data.id },
+      data: {
+        level: data.level,
+      },
+    });
+    revalidatePath("/list/grades");
+    return { success: true, error: false };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: true, message: "Failed to update grade!" };
+  }
+}
+
+export async function deleteGrade(
+  currentState: CurrentState,
+  formData: FormData
+) {
+  const id = formData.get("id");
+  if (!id) return { success: false, error: true };
+  try {
+    await prisma.grade.delete({
+      where: { id: Number(id) },
+    });
+    return { success: true, error: false };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: true, message: "Failed to delete grade. Make sure it has no active classes." };
+  }
+}
+
 
 export async function createClass(data: ClassSchema) {
   try {

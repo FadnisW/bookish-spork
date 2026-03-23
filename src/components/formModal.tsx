@@ -19,6 +19,7 @@ import {
   deleteEvent,
   deleteAnnouncement,
   deleteSchoolException,
+  deleteGrade,
 } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -39,6 +40,7 @@ const deleteActionMap = {
   event: deleteEvent,
   announcement: deleteAnnouncement,
   schoolException: deleteSchoolException,
+  grade: deleteGrade,
 };
 
 // USE LAZY LOADING
@@ -77,6 +79,9 @@ const AnnouncementForm = dynamic(() => import("./forms/announcementForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 const SchoolExceptionForm = dynamic(() => import("./forms/schoolExceptionForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const GradeForm = dynamic(() => import("./forms/gradeForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
@@ -180,6 +185,13 @@ const forms: {
   ),
   schoolException: (type, data, setOpen, relatedData) => (
     <SchoolExceptionForm
+      type={type}
+      data={data}
+      setOpen={setOpen!}
+    />
+  ),
+  grade: (type, data, setOpen, relatedData) => (
+    <GradeForm
       type={type}
       data={data}
       setOpen={setOpen!}
