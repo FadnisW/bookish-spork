@@ -37,7 +37,7 @@ const menuItems = [
         visible: ["admin"],
       },
       {
-        icon: "/class.png", // Reusing class.png icon for Grades
+        icon: "/GradeClass.png",
         label: "Grades",
         href: "/list/grades",
         visible: ["admin"],
