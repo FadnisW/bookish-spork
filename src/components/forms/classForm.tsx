@@ -30,7 +30,10 @@ const ClassForm = ({
         resolver: zodResolver(classSchema) as any,
         defaultValues: {
            ...data,
-           teachers: data?.curriculum || []
+           teachers: data?.curriculum?.map((c: any) => ({
+             subjectId: String(c.subjectId),
+             teacherId: c.teacherId,
+           })) || []
         }
     });
 
@@ -138,7 +141,7 @@ const ClassForm = ({
                                <select
                                    className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
                                    {...register(`teachers.${index}.subjectId`)}
-                                   defaultValue={field.subjectId}
+                                   defaultValue={String(field.subjectId || "")}
                                >
                                    <option value="">Select Subject</option>
                                    {subjects.map((sub: any) => (
@@ -155,8 +158,8 @@ const ClassForm = ({
                                <select
                                    className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
                                    {...register(`teachers.${index}.teacherId`)}
-                                   defaultValue={field.teacherId}
-                                   disabled={!selectedSubjectId}
+                                   defaultValue={field.teacherId || ""}
+                                   disabled={!selectedSubjectId && !field.subjectId}
                                >
                                    <option value="">{selectedSubjectId ? "Select Teacher" : "Select Subject First"}</option>
                                    {availableTeachers.map((t: any) => (

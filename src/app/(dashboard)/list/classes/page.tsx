@@ -132,7 +132,7 @@ const ClassListPage = async ({
             <div className="flex items-center gap-2">
               {role === "admin" && (
                 <>
-                  <FormContainer table="class" type="update" data={item} relatedData={{ teachers, grades }} />
+                  <FormContainer table="class" type="update" data={item} relatedData={{ teachers, grades, subjects }} />
                   <FormContainer table="class" type="delete" id={item.id} />
                 </>
               )}
