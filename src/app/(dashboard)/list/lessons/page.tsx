@@ -138,9 +138,9 @@ const LessonListPage = async (props: {
       <td className="hidden lg:table-cell">{(item as any).room || "-"}</td>  
       <td className="hidden lg:table-cell">
          {item.day.slice(0, 3)} 
-         {" " + new Date(item.startTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true })}
+         {" " + new Date(item.startTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true, timeZone: "UTC" })}
          {" - "}
-         {new Date(item.endTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true })}
+         {new Date(item.endTime).toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12: true, timeZone: "UTC" })}
       </td>
       <td>
         <div className="flex items-center gap-2">

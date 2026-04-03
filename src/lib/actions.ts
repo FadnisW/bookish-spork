@@ -1296,12 +1296,12 @@ export const createLesson = async (data: LessonSchema) => {
        return { success: false, error: true, message: "Invalid Day selected." };
     }
 
-    const baseDate = new Date(1970, 0, 4); 
-    baseDate.setDate(baseDate.getDate() + targetDayOfWeek);
+    const baseDate = new Date(Date.UTC(1970, 0, 4)); 
+    baseDate.setUTCDate(baseDate.getUTCDate() + targetDayOfWeek);
 
     const shiftToTargetDay = (inputTime: Date) => {
       const adjustedDate = new Date(baseDate);
-      adjustedDate.setHours(inputTime.getHours(), inputTime.getMinutes(), inputTime.getSeconds());
+      adjustedDate.setUTCHours(inputTime.getUTCHours(), inputTime.getUTCMinutes(), inputTime.getUTCSeconds());
       return adjustedDate;
     };
 
@@ -1372,12 +1372,12 @@ export const updateLesson = async (data: LessonSchema) => {
     const dayMap: Record<string, number> = { SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6 };
     const targetDayOfWeek = dayMap[data.day as string]; 
 
-    const baseDate = new Date(1970, 0, 4); 
-    baseDate.setDate(baseDate.getDate() + targetDayOfWeek);
+    const baseDate = new Date(Date.UTC(1970, 0, 4)); 
+    baseDate.setUTCDate(baseDate.getUTCDate() + targetDayOfWeek);
 
     const shiftToTargetDay = (inputTime: Date) => {
       const adjustedDate = new Date(baseDate);
-      adjustedDate.setHours(inputTime.getHours(), inputTime.getMinutes(), inputTime.getSeconds());
+      adjustedDate.setUTCHours(inputTime.getUTCHours(), inputTime.getUTCMinutes(), inputTime.getUTCSeconds());
       return adjustedDate;
     };
 

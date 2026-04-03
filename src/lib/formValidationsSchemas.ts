@@ -182,19 +182,19 @@ export const lessonSchema = z.object({
   day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], { message: "Day is required!" }),
   startTime: z.preprocess((val) => {
     if (typeof val === 'string' && val.includes(':')) {
-       const today = new Date();
+       const d = new Date(Date.UTC(1970, 0, 1));
        const [hours, minutes] = val.split(':');
-       today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-       return today;
+       d.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+       return d;
     }
     return val;
   }, z.date({ message: "Start time is required!" })),
   endTime: z.preprocess((val) => {
     if (typeof val === 'string' && val.includes(':')) {
-       const today = new Date();
+       const d = new Date(Date.UTC(1970, 0, 1));
        const [hours, minutes] = val.split(':');
-       today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-       return today;
+       d.setUTCHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+       return d;
     }
     return val;
   }, z.date({ message: "End time is required!" })),

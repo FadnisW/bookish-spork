@@ -109,7 +109,7 @@ const LessonForm = ({
           type="time"
           defaultValue={
             data?.startTime
-              ? new Date(data.startTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+              ? new Date(data.startTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })
               : ""
           }
           register={register as any}
@@ -121,7 +121,7 @@ const LessonForm = ({
           type="time"
           defaultValue={
             data?.endTime
-              ? new Date(data.endTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+              ? new Date(data.endTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })
               : ""
           }
           register={register as any}
