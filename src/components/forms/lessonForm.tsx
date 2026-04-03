@@ -31,23 +31,28 @@ const LessonForm = ({
   const router = useRouter();
   const lessonAction = type === "create" ? createLesson : updateLesson;
 
-  const allSubjects = relatedData?.subjects || [];
-  const allClasses = relatedData?.classes || [];
   const teachers = relatedData?.teachers || [];
+  const curriculum: any[] = relatedData?.curriculumAssignments || [];
 
   const selectedTeacherId = watch("teacherId");
   const selectedClassId = watch("classId");
 
-  const selectedTeacherDbObj = selectedTeacherId 
-     ? teachers.find((t: any) => t.id === selectedTeacherId)
-     : null;
-
-  const subjects = selectedTeacherDbObj 
-    ? allSubjects.filter((s: any) => selectedTeacherDbObj.subjects.some((ts: any) => ts.id === s.id))
+  // Step 2: Classes where this teacher has curriculum assignments
+  const classes = selectedTeacherId
+    ? [...new Map(
+        curriculum
+          .filter((c: any) => c.teacherId === selectedTeacherId)
+          .map((c: any) => [c.class.id, c.class])
+      ).values()]
     : [];
-    
-  const classes = selectedTeacherDbObj 
-    ? allClasses.filter((c: any) => selectedTeacherDbObj.classes.some((tc: any) => tc.id === c.id))
+
+  // Step 3: Subjects this teacher teaches in this specific class
+  const subjects = (selectedTeacherId && selectedClassId)
+    ? [...new Map(
+        curriculum
+          .filter((c: any) => c.teacherId === selectedTeacherId && c.classId === Number(selectedClassId))
+          .map((c: any) => [c.subject.id, c.subject])
+      ).values()]
     : [];
 
   const onSubmit = handleSubmit(async (values: any) => {

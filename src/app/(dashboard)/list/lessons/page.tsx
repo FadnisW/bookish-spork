@@ -102,26 +102,30 @@ const LessonListPage = async (props: {
     }),
   ]); 
 
-  let subjectsInfo: any = [], classesInfo: any = [], teachersInfo: any = [];
+  let teachersInfo: any = [], curriculumInfo: any = [];
   if (role === "admin") {
-     const [subjData, classData, teacherData] = await prisma.$transaction([
-        prisma.subject.findMany({ select: { id: true, name: true } }),
-        prisma.class.findMany({ select: { id: true, name: true } }),
+     const [teacherData, curriculumData] = await prisma.$transaction([
         prisma.teacher.findMany({ 
           select: { 
             id: true, 
             name: true, 
             surname: true, 
-            subjects: { select: { id: true } },
-            classes: { select: { id: true } }
           } 
-        })
+        }),
+        prisma.classTeacherAssignment.findMany({
+          select: {
+            teacherId: true,
+            classId: true,
+            subjectId: true,
+            class: { select: { id: true, name: true } },
+            subject: { select: { id: true, name: true } },
+          }
+        }),
      ]);
-     subjectsInfo = subjData;
-     classesInfo = classData;
      teachersInfo = teacherData;
+     curriculumInfo = curriculumData;
   }
-  const relatedData = { subjects: subjectsInfo, classes: classesInfo, teachers: teachersInfo };
+  const relatedData = { teachers: teachersInfo, curriculumAssignments: curriculumInfo };
 
   const renderRow = (item: LessonList) => (
     <tr
