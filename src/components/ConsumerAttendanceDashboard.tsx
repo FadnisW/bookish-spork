@@ -12,10 +12,8 @@ type AttendanceRecord = {
   markedAt: Date;
   remarks: string | null;
   attachment: string | null;
-  lesson: {
-    subject: { name: string };
-    class: { name: string };
-  };
+  subject: { name: string };
+  class: { name: string };
 };
 
 const ConsumerAttendanceDashboard = ({ records, role, studentName }: { records: AttendanceRecord[], role: string, studentName: string }) => {
@@ -79,7 +77,7 @@ const ConsumerAttendanceDashboard = ({ records, role, studentName }: { records: 
             <div className="flex flex-wrap gap-2">
                {/* Just showing recent days as a mini heatmap strip */}
                {records.slice(0, 14).map((r, i) => (
-                 <div key={r.id} className="flex flex-col items-center gap-1" title={`${new Date(r.date).toLocaleDateString()} - ${r.lesson.subject.name}`}>
+                 <div key={r.id} className="flex flex-col items-center gap-1" title={`${new Date(r.date).toLocaleDateString()} - ${r.subject.name}`}>
                    <div className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold text-white shadow-sm ${
                       r.status === "PRESENT" ? "bg-green-400" :
                       r.status === "ABSENT" ? "bg-red-400" :
@@ -114,7 +112,7 @@ const ConsumerAttendanceDashboard = ({ records, role, studentName }: { records: 
                     </div>
                     <div className="flex flex-col">
                        <span className="font-semibold text-gray-700">{new Date(r.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                       <span className="text-sm text-gray-500">{r.lesson.subject.name} • {r.lesson.class.name}</span>
+                       <span className="text-sm text-gray-500">{r.subject.name} • {r.class.name}</span>
                        {(r.remarks || r.attachment) && (
                          <div className="flex items-center gap-2 mt-1">
                            {r.remarks && <span className="text-xs text-gray-400 italic">&quot;{r.remarks}&quot;</span>}

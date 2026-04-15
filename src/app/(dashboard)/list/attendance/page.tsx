@@ -13,18 +13,15 @@ import ConsumerAttendanceDashboard from "@/components/ConsumerAttendanceDashboar
 
 type AttendanceList = Attendance & {
   student: Student;
-  lesson: Lesson & {
-    subject: { name: string };
-    class: { name: string };
-  };
-  teacher: Teacher;
+  subject: { name: string };
+  class: { name: string };
 };
 
 const columns = [
   { header: "Date", accessor: "date" },
   { header: "Student", accessor: "info" },
   { header: "Class", accessor: "class", className: "hidden md:table-cell" },
-  { header: "Lesson", accessor: "lesson", className: "hidden lg:table-cell" },
+  { header: "Subject", accessor: "subject", className: "hidden lg:table-cell" },
   { header: "Status", accessor: "status" },
   { header: "Time", accessor: "markedAt", className: "hidden lg:table-cell" },
   { header: "Remark", accessor: "remark", className: "hidden lg:table-cell" },
@@ -53,8 +50,8 @@ const renderRow = (item: AttendanceList) => (
         <h3 className="font-semibold">{item.student.name} {item.student.surname}</h3>
       </div>
     </td>
-    <td className="hidden md:table-cell p-4">{item.lesson.class.name}</td>
-    <td className="hidden lg:table-cell p-4">{item.lesson.subject.name}</td>
+    <td className="hidden md:table-cell p-4">{item.class.name}</td>
+    <td className="hidden lg:table-cell p-4">{item.subject.name}</td>
     <td className="p-4">
       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status)}`}>
         {item.status}
@@ -78,38 +75,38 @@ const AttendanceListPage = async (props: {
   // STAFF VIEW (Admin & Teacher) - Phase 2
   // ==========================================
   if (role === "admin" || role === "teacher") {
-     const { date, classId, lessonId } = searchParams;
+     const { date, classId, subjectId } = searchParams;
      
      // 1. Fetch Dropdown Data
      let classes = [];
-     let lessons = [];
+     let subjects = [];
      if (role === "admin") {
         classes = await prisma.class.findMany({ select: { id: true, name: true, supervisorId: true }});
-        lessons = await prisma.lesson.findMany({ select: { id: true, name: true, classId: true, day: true, teacherId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }});
+        subjects = await prisma.classTeacherAssignment.findMany({ select: { subjectId: true, classId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }});
      } else {
         classes = await prisma.class.findMany({
-           where: { OR: [ { supervisorId: userId! }, { lessons: { some: { teacherId: userId! } } } ] },
+           where: { OR: [ { supervisorId: userId! }, { curriculum: { some: { teacherId: userId! } } } ] },
            select: { id: true, name: true, supervisorId: true, capacity: true }
         });
-        lessons = await prisma.lesson.findMany({
+        subjects = await prisma.classTeacherAssignment.findMany({
            where: { OR: [ { teacherId: userId! }, { class: { supervisorId: userId! } } ] },
-           select: { id: true, name: true, classId: true, day: true, teacherId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }
+           select: { subjectId: true, classId: true, subject: { select: { name: true } }, teacher: { select: { name: true, surname: true } } }
         });
      }
 
      // 2. Determine Spreadsheet State
      let spreadsheetData = null;
      let holidayReason: string | null = null;
-     if (date && classId && lessonId) {
+     if (date && classId && subjectId) {
         const students = await prisma.student.findMany({
            where: { classId: parseInt(classId) },
            select: { id: true, name: true, surname: true },
            orderBy: { name: 'asc' }
         });
 
-        let targetLessons: number[] = [];
-        if (lessonId !== "whole_day") {
-           targetLessons = [parseInt(lessonId)];
+        let targetSubjects: number[] = [];
+        if (subjectId !== "whole_day") {
+           targetSubjects = [parseInt(subjectId)];
         } else {
            const jsDate = new Date(date);
            const dayNum = jsDate.getDay();
@@ -121,10 +118,11 @@ const AttendanceListPage = async (props: {
              const dayStr = SCHOOL_DAYS[dayNum - 1]; // 1→MON … 6→SAT
              const clsLessons = await prisma.lesson.findMany({
                where: { classId: parseInt(classId), day: dayStr as any },
+               select: { subjectId: true },
              });
-             targetLessons = clsLessons.map(l => l.id);
+             targetSubjects = [...new Set(clsLessons.map(l => l.subjectId))];
            }
-           // dayNum === 0 (Sunday) → targetLessons stays [], page shows empty state
+           // dayNum === 0 (Sunday) → targetSubjects stays [], page shows empty state
         }
         if (date) {
           const jsDate = new Date(date);
@@ -153,7 +151,8 @@ const AttendanceListPage = async (props: {
         
         const existingRecords = await prisma.attendance.findMany({
            where: {
-              lessonId: { in: targetLessons },
+              subjectId: { in: targetSubjects },
+              classId: parseInt(classId),
               date: { gte: startOfDay, lte: endOfDay }
            }
         });
@@ -190,14 +189,14 @@ const AttendanceListPage = async (props: {
                 <FormModal table="schoolException" type="create" />
              )}
           </div>
-          <AttendanceFilters classes={classes} lessons={lessons as any} currentUserId={userId!} role={role} />
+          <AttendanceFilters classes={classes} subjects={subjects as any} currentUserId={userId!} role={role} />
           
           {spreadsheetData ? (
              <AttendanceSpreadsheet 
                students={spreadsheetData as any} 
                classId={parseInt(classId!)} 
                date={date!} 
-               lessonId={lessonId === "whole_day" ? undefined : parseInt(lessonId!)}
+               subjectId={subjectId === "whole_day" ? undefined : parseInt(subjectId!)}
                holidayReason={holidayReason}
              />
           ) : (
@@ -229,8 +228,8 @@ const AttendanceListPage = async (props: {
       where: query,
       include: {
         student: true,
-        lesson: { include: { subject: { select: { name: true } }, class: { select: { name: true } } } },
-        teacher: { select: { name: true, surname: true } },
+        subject: { select: { name: true } },
+        class: { select: { name: true } },
       },
       orderBy: { date: "desc" },
     }),

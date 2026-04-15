@@ -165,15 +165,14 @@ async function main() {
   }
 
   for (let i = 1; i <= 10; i++) {
-  const lessonId = (i % 30) + 1;
   await prisma.attendance.create({
     data: {
       date: new Date(), 
       present: true, 
       studentId: `student${i}`, 
-      lessonId: lessonId,
-      teacherId: `teacher${((lessonId - 1) % 15) + 1}`, // ← Add this - matches lesson's teacher
-      markedBy: "system", // ← Add this
+      classId: (i % 6) + 1,
+      subjectId: (i % 10) + 1,
+      markedBy: "system",
     },
   });
 }

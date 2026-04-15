@@ -1118,50 +1118,47 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
     if (!userId || !role) throw new Error("Unauthorized");
 
     // 1. Validate Scope & Authorization
-    const { date, classId, lessonId, forceOverride, records } = data;
+    const { date, classId, subjectId, forceOverride, records } = data;
     
     // Get class info
     const cls = await prisma.class.findUnique({ where: { id: classId } });
     if (!cls) throw new Error("Class not found");
 
     if (role === "teacher") {
-       if (!lessonId && cls.supervisorId !== userId) {
+       if (!subjectId && cls.supervisorId !== userId) {
           throw new Error("Only the Class Supervisor can mark 'Whole Day' attendance.");
        }
-       if (lessonId) {
-          const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-          if (!lesson || (lesson.teacherId !== userId && cls.supervisorId !== userId)) {
-             throw new Error("You do not have permission to mark this lesson.");
+       if (subjectId) {
+          const assignment = await prisma.classTeacherAssignment.findUnique({ 
+             where: { classId_subjectId: { classId, subjectId } } 
+          });
+          if ((!assignment || assignment.teacherId !== userId) && cls.supervisorId !== userId) {
+             throw new Error("You do not have permission to mark this subject.");
           }
        }
     }
 
-    // 2. Resolve Lessons to Update
-     let targetLessonsList: { id: number, teacherId: string }[] = [];
+    // 2. Resolve Subjects to Update
+     let targetSubjectsList: number[] = [];
      
-     if (lessonId) {
-        const singleLesson = await prisma.lesson.findUnique({
-           where: { id: lessonId },
-           select: { id: true, teacherId: true }
-        });
-        if (singleLesson) targetLessonsList = [singleLesson];
+     if (subjectId) {
+        targetSubjectsList = [subjectId];
      } else {
-        // Find all lessons for that class on that day
+        // Find all scheduled subjects for that class on that day
         const jsDate = new Date(date);
         const dayOfWeekNum = jsDate.getDay();
         const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
         const currentDayString = days[dayOfWeekNum];
         
-        targetLessonsList = await prisma.lesson.findMany({
+        const lessons = await prisma.lesson.findMany({
            where: { classId, day: currentDayString as any },
-           select: { id: true, teacherId: true }
+           select: { subjectId: true }
         });
+        targetSubjectsList = [...new Set(lessons.map(l => l.subjectId))];
      }
 
-     const targetLessons = targetLessonsList.map(l => l.id);
-
-    if (targetLessons.length === 0) {
-       return { success: true, error: false, message: "No lessons found for this date/class." };
+    if (targetSubjectsList.length === 0) {
+       return { success: true, error: false, message: "No subjects scheduled for this date/class." };
     }
 
     // 3. Prevent edits locked after 48 hours
@@ -1171,7 +1168,7 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
     // 4. Build PRISMA TX Operations
     const operations = [];
 
-    // Fetch existing records for these students and lessons on this date
+    // Fetch existing records for these students and subjects on this date
     // We compare date loosely avoiding timezone shifts
     const startOfDay = new Date(new Date(date).setHours(0,0,0,0));
     const endOfDay = new Date(new Date(date).setHours(23,59,59,999));
@@ -1179,7 +1176,8 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
     const existingRecords = await prisma.attendance.findMany({
        where: {
           studentId: { in: records.map(r => r.studentId) },
-          lessonId: { in: targetLessons },
+          subjectId: { in: targetSubjectsList },
+          classId: classId,
           date: {
              gte: startOfDay,
              lte: endOfDay
@@ -1189,14 +1187,12 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
 
     const existingMap = new Map();
     existingRecords.forEach(r => {
-       existingMap.set(`${r.studentId}-${r.lessonId}`, r);
+       existingMap.set(`${r.studentId}-${r.subjectId}`, r);
     });
 
     for (const record of records) {
-       for (const targetLessonObj of targetLessonsList) {
-          const targetLessonId = targetLessonObj.id;
-          const lessonTeacherId = targetLessonObj.teacherId;
-          const mapKey = `${record.studentId}-${targetLessonId}`;
+       for (const targetSubjectId of targetSubjectsList) {
+          const mapKey = `${record.studentId}-${targetSubjectId}`;
           const existing = existingMap.get(mapKey);
 
           // Lock check
@@ -1206,7 +1202,7 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
           }
 
           // Conflict Resolution: If Whole Day but already marked by Specific Teacher, skip unless forceOverride
-          if (!lessonId && existing && existing.markedBy !== userId) {
+          if (!subjectId && existing && existing.markedBy !== userId) {
              if (!forceOverride) continue; // Skip because another teacher marked it
           }
 
@@ -1219,6 +1215,7 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
                      remarks: record.remark || null,
                      minutesLate: record.minutesLate || null,
                      updatedBy: userId,
+                     present: record.status === "PRESENT" || record.status === "LATE",
                   } as any
                })
              );
@@ -1231,11 +1228,11 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
                      remarks: record.remark || null,
                      minutesLate: record.minutesLate || null,
                      studentId: record.studentId,
-                     lessonId: targetLessonId,
-                     teacherId: lessonTeacherId,
+                     classId: classId,
+                     subjectId: targetSubjectId,
                      markedBy: userId,
                      updatedBy: userId,
-                     present: record.status === "PRESENT" || record.status === "LATE", // To satisfy legacy schema requirement
+                     present: record.status === "PRESENT" || record.status === "LATE",
                   } as any
                })
              );
@@ -1445,10 +1442,7 @@ export const deleteLesson = async (
   try {
     // Industrial safety: purge related historical data using transaction
     await prisma.$transaction(async (tx) => {
-      // 1. Delete associated attendances
-      await tx.attendance.deleteMany({
-        where: { lessonId: id }
-      });
+      // Removing attendance deletion; attendance is now coupled to Subject + Class, not individual lesson instances.
 
       // 2. Clear assignment/exam results
       const assignments = await tx.assignment.findMany({ where: { lessonId: id }, select: { id: true }});
@@ -1755,7 +1749,7 @@ export const getProfileData = async (userId: string, role: string) => {
               include: {
                 subject: true,
                 class: { select: { id: true, name: true } },
-                _count: { select: { exams: true, assignments: true, attendances: true } },
+                _count: { select: { exams: true, assignments: true } },
               },
             },
             _count: { select: { subjects: true, lessons: true, classes: true } },

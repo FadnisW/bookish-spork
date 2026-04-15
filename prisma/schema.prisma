@@ -53,7 +53,6 @@ model Teacher {
   birthday  DateTime
   classes   Class[]
   lessons   Lesson[]
-  attendances Attendance[]
   subjects  Subject[] @relation("SubjectToTeacher")
   curriculum ClassTeacherAssignment[]
   events        Event[]
@@ -94,6 +93,7 @@ model Class {
   students      Student[]
   curriculum    ClassTeacherAssignment[]
   notifications Notification[]
+  attendances   Attendance[]
 }
 
 model Subject {
@@ -102,6 +102,7 @@ model Subject {
   lessons  Lesson[]
   teachers Teacher[] @relation("SubjectToTeacher")
   curriculum ClassTeacherAssignment[]
+  attendances Attendance[]
 }
 
 model Lesson {
@@ -118,7 +119,6 @@ model Lesson {
   status      LessonStatus @default(ACTIVE)
   description String?
   assignments Assignment[]
-  attendances Attendance[]
   exams       Exam[]
   class       Class        @relation(fields: [classId], references: [id])
   subject     Subject      @relation(fields: [subjectId], references: [id])
@@ -158,28 +158,30 @@ model Result {
 }
 
 model Attendance {
-  id        Int              @id @default(autoincrement())
-  date      DateTime
-  present   Boolean
-  studentId String
-  lessonId  Int
-  teacherId String
-  status    AttendanceStatus @default(ABSENT)
-  remarks   String?
-  markedAt  DateTime         @default(now())
-  markedBy  String
+  id          Int              @id @default(autoincrement())
+  date        DateTime
+  present     Boolean
+  studentId   String
+  classId     Int
+  subjectId   Int
+  status      AttendanceStatus @default(ABSENT)
+  remarks     String?
+  markedAt    DateTime         @default(now())
+  markedBy    String
   minutesLate Int?
   updatedBy   String?
-  updatedAt   DateTime       @updatedAt @default(now())
+  updatedAt   DateTime         @updatedAt @default(now())
   attachment  String?
-  lesson    Lesson           @relation(fields: [lessonId], references: [id])
-  student   Student          @relation(fields: [studentId], references: [id])
-  teacher   Teacher          @relation(fields: [teacherId], references: [id])
+  
+  student     Student          @relation(fields: [studentId], references: [id])
+  class       Class            @relation(fields: [classId], references: [id])
+  subject     Subject          @relation(fields: [subjectId], references: [id])
 
-  @@unique([studentId, lessonId, date])
+  @@unique([studentId, subjectId, date])
   @@index([date])
   @@index([studentId])
-  @@index([lessonId])
+  @@index([subjectId])
+  @@index([classId])
 }
 
 model Event {

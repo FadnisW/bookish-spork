@@ -162,7 +162,7 @@ export type ParentSchema = z.infer<typeof parentSchema>;
 export const bulkAttendanceSchema = z.object({
   date: z.coerce.date(),
   classId: z.coerce.number(),
-  lessonId: z.coerce.number().optional(),
+  subjectId: z.coerce.number().optional(),
   forceOverride: z.boolean().optional(),
   records: z.array(
     z.object({

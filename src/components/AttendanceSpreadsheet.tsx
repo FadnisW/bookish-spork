@@ -28,27 +28,27 @@ const AttendanceSpreadsheet = ({
   students,
   classId,
   date,
-  lessonId,
+  subjectId,
   forceOverride = false,
   holidayReason,
 }: {
   students: StudentData[];
   classId: number;
   date: string;
-  lessonId?: number; // if undefined, it means 'whole_day'
+  subjectId?: number; // if undefined, it means 'whole_day'
   forceOverride?: boolean;
   holidayReason?: string | null;
 }) => {
   const [isPending, startTransition] = useTransition();
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const draftKey = `attendance-draft-${classId}-${date}-${lessonId || "whole"}`;
+  const draftKey = `attendance-draft-${classId}-${date}-${subjectId || "whole"}`;
 
   const { register, control, handleSubmit, watch, setValue, getValues, reset } = useForm<BulkAttendanceSchema>({
     resolver: zodResolver(bulkAttendanceSchema) as any,
     defaultValues: {
       date: new Date(date),
       classId,
-      lessonId,
+      subjectId,
       forceOverride,
       records: students.map(s => ({
         studentId: s.id,
