@@ -17,7 +17,17 @@ const Table = ({
             ))}
           </tr>
         </thead>
-        <tbody>{data.map((item) => renderRow(item))}</tbody>
+        <tbody>
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="text-center py-10 text-gray-400 text-sm">
+                No records found.
+              </td>
+            </tr>
+          ) : (
+            data.map((item) => renderRow(item))
+          )}
+        </tbody>
       </table>
     </div>
   );

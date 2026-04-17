@@ -107,7 +107,7 @@ const SingleStudentPage = async ({
                 )}
               </div>
               <p className="text-sm text-gray-500">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
+                {student.name} is enrolled in the {student.grade.level}th grade for the current academic year.
               </p>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
@@ -192,7 +192,7 @@ const SingleStudentPage = async ({
           </div>
         </div>
         {/* BOTTOM */}
-        <div className="mt-4 h-[calc(180vh-40px)] bg-white p-4 rounded-md">
+        <div className="mt-4 min-h-[500px] h-auto lg:h-[800px] bg-white p-4 rounded-md">
           <h1>Student&apos;s Schedule</h1>
           <div className="h-[calc(100%-100px)]">
             <BigCalendarContainer type="classId" id={student.classId} />

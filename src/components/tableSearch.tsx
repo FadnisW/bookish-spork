@@ -37,7 +37,7 @@ const TableSearch = () => {
         type="text"
         placeholder="Search..."
         defaultValue={currentSearch}
-        className="w-[200px] p-2 bg-transparent outline-none"
+        className="w-full md:w-[200px] p-2 bg-transparent outline-none"
       />
       {currentSearch && (
         <button

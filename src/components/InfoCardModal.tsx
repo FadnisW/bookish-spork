@@ -26,7 +26,7 @@ export default function InfoCardModal({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 relative flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 relative flex flex-col gap-4 transform transition-all duration-200">
             <button 
               onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
               className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"

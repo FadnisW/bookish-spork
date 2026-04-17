@@ -31,22 +31,63 @@ const Pagination = ({
         Prev
       </button>
       <div className="flex items-center gap-2 text-sm">
-        {Array.from(
-          { length: Math.ceil(count / ITEMS_PER_PAGE) },
-          (_, index) => {
-            const pageIndex = index + 1;
-            return (
-              <button
-                key={pageIndex}
-                className={`px-2 rounded-sm bg-lamaSky ${
-                  currentPage === pageIndex ? "text-white" : ""
-                }`}
-                onClick={() => changePage(pageIndex)}
+        {Math.ceil(count / ITEMS_PER_PAGE) <= 5 ? (
+          Array.from(
+            { length: Math.ceil(count / ITEMS_PER_PAGE) },
+            (_, index) => {
+              const pageIndex = index + 1;
+              return (
+                <button
+                  key={pageIndex}
+                  className={`px-2 rounded-sm bg-lamaSky ${
+                    currentPage === pageIndex ? "text-white" : ""
+                  }`}
+                  onClick={() => changePage(pageIndex)}
+                >
+                  {pageIndex}
+                </button>
+              );
+            }
+          )
+        ) : (
+          <>
+            {/* First Page */}
+            {(currentPage > 2) && (
+              <button className="px-2 rounded-sm bg-lamaSky" onClick={() => changePage(1)}>1</button>
+            )}
+            
+            {(currentPage > 3) && <span className="opacity-50">...</span>}
+
+            {/* Previous, Current, Next */}
+            {[currentPage - 1, currentPage, currentPage + 1].map((pageIndex) => {
+              if (pageIndex > 0 && pageIndex <= Math.ceil(count / ITEMS_PER_PAGE)) {
+                return (
+                  <button
+                    key={pageIndex}
+                    className={`px-2 rounded-sm bg-lamaSky ${
+                      currentPage === pageIndex ? "text-white" : ""
+                    }`}
+                    onClick={() => changePage(pageIndex)}
+                  >
+                    {pageIndex}
+                  </button>
+                );
+              }
+              return null;
+            })}
+
+            {(currentPage < Math.ceil(count / ITEMS_PER_PAGE) - 2) && <span className="opacity-50">...</span>}
+
+            {/* Last Page */}
+            {(currentPage < Math.ceil(count / ITEMS_PER_PAGE) - 1) && (
+              <button 
+                className="px-2 rounded-sm bg-lamaSky" 
+                onClick={() => changePage(Math.ceil(count / ITEMS_PER_PAGE))}
               >
-                {pageIndex}
+                {Math.ceil(count / ITEMS_PER_PAGE)}
               </button>
-            );
-          }
+            )}
+          </>
         )}
       </div>
       <button

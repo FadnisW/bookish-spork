@@ -206,7 +206,7 @@ const FormModal = ({
   id,
   relatedData,
 }: FormContainerProps) => {
-  const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
+  const size = type === "create" ? "w-11 h-11 md:w-8 md:h-8" : "w-11 h-11 md:w-7 md:h-7";
   const bgColor =
     type === "create"
       ? "bg-lamaYellow"
@@ -269,7 +269,7 @@ const FormModal = ({
         <Image src={`/${type}.png`} alt="" width={16} height={16} />
       </button>
       {open && (
-        <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+        <div className="w-screen h-screen fixed left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] max-h-[90vh] overflow-y-auto">
             <Form />
             <div
