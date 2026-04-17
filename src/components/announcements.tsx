@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import InfoCardModal from "./InfoCardModal";
 
 const Announcements = async ({ classId, dateParam }: { classId?: number; dateParam?: string }) => {
   const { userId, sessionClaims } = await auth();
@@ -84,15 +85,22 @@ const Announcements = async ({ classId, dateParam }: { classId?: number; datePar
           </p>
         ) : (
           data.map((announcement, index) => (
-            <div key={announcement.id} className={`${bgColors[index % 3]} rounded-md p-4`}>
-              <div className="flex items-center justify-between">
-                <h2 className="font-medium">{announcement.title}</h2>
-                <span className="text-xs text-gray-400 bg-white rounded-md px-1 py-1">
-                  {new Intl.DateTimeFormat("en-IN").format(announcement.date)}
-                </span>
+            <InfoCardModal 
+              key={announcement.id}
+              title={announcement.title}
+              date={new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" }).format(announcement.date)}
+              description={announcement.description}
+            >
+              <div className={`${bgColors[index % 3]} rounded-md p-4 h-full flex flex-col`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-medium line-clamp-1 pr-2">{announcement.title}</h2>
+                  <span className="text-xs text-gray-400 bg-white rounded-md px-1 py-1 shrink-0">
+                    {new Intl.DateTimeFormat("en-IN", { timeZone: "UTC" }).format(announcement.date)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400 mt-1 line-clamp-2">{announcement.description}</p>
               </div>
-              <p className="text-sm text-gray-400 mt-1">{announcement.description}</p>
-            </div>
+            </InfoCardModal>
           ))
         )}
       </div>

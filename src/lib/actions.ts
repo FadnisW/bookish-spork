@@ -1201,8 +1201,13 @@ export const saveBulkAttendance = async (data: BulkAttendanceSchema) => {
              if (timeDiff > LOCK_MS) continue; // Skip locked
           }
 
-          // Conflict Resolution: If Whole Day but already marked by Specific Teacher, skip unless forceOverride
-          if (!subjectId && existing && existing.markedBy !== userId) {
+          // Conflict Resolution: 
+          // If Whole Day mode (!subjectId) -> treat as implicit forceOverride for Admins and Supervisors.
+          // Otherwise, if someone else marked this subject explicitly, skip unless explicitly forceOverriden.
+          const isWholeDay = !subjectId;
+          const implicitOverride = isWholeDay && (role === "admin" || forceOverride);
+          
+          if (!implicitOverride && existing && existing.markedBy !== userId) {
              if (!forceOverride) continue; // Skip because another teacher marked it
           }
 

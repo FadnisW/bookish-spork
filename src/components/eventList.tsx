@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import InfoCardModal from "./InfoCardModal";
 
 const EventList = async ({ dateParam, classId }: { dateParam: string | undefined; classId?: number }) => {
   const { userId, sessionClaims } = await auth();
@@ -74,24 +75,35 @@ const EventList = async ({ dateParam, classId }: { dateParam: string | undefined
 
   return (
     <>
-      {data.map((event) => (
-        <div
-          className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-lamaSky even:border-t-lamaPurple"
-          key={event.id}
-        >
-          <div className="flex items-center justify-between">
-            <h1 className="font-semibold text-gray-600">{event.title}</h1>
-            <span className="text-gray-300 text-xs">
-              {event.startTime.toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </span>
-          </div>
-          <p className="mt-2 text-gray-400 text-sm">{event.description}</p>
-        </div>
-      ))}
+      {data.map((event) => {
+        const timeStr = event.startTime.toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: "UTC"
+        });
+
+        return (
+          <InfoCardModal
+            key={event.id}
+            title={event.title}
+            date={timeStr}
+            description={event.description}
+          >
+            <div
+              className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-lamaSky even:border-t-lamaPurple h-full flex flex-col"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h1 className="font-semibold text-gray-600 line-clamp-1 pr-2">{event.title}</h1>
+                <span className="text-gray-300 text-xs shrink-0">
+                  {timeStr}
+                </span>
+              </div>
+              <p className="mt-2 text-gray-400 text-sm line-clamp-2">{event.description}</p>
+            </div>
+          </InfoCardModal>
+        );
+      })}
     </>
   );
 };
