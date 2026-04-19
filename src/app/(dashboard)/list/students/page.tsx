@@ -5,13 +5,14 @@ import TableSearch from "@/components/tableSearch";
 import Image from "next/image";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { Class, Prisma, Student } from "@prisma/client";
+import { Class, Grade, Prisma, Student } from "@prisma/client";
 import { ITEMS_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 import { getAllGrades, getAllClasses } from "@/lib/actions";
 
 type StudentList = Student & {
   class: Class;
+  grade: Grade;
 };
 
 const StudentListPage = async ({
@@ -61,6 +62,7 @@ const StudentListPage = async ({
       where: query,
       include: {
         class: true,
+        grade: true,
       },
       orderBy: {
         id: "asc",
@@ -115,7 +117,7 @@ const StudentListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Students</h1>
+        <h1 className="text-base md:text-lg font-semibold">All Students</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
@@ -151,7 +153,7 @@ const StudentListPage = async ({
             </div>
           </td>
           <td className="hidden md:table-cell">{item.username}</td>
-          <td className="hidden md:table-cell">{item.class.name[0]}</td>
+          <td className="hidden md:table-cell">{item.grade?.level ?? "-"}</td>
           <td className="hidden md:table-cell">{item.phone}</td>
           <td className="hidden md:table-cell">{item.address}</td>
           <td>

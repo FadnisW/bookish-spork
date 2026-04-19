@@ -25,7 +25,7 @@ const Pagination = ({
     <div className="p-4 flex items-center justify-between text-gray-500">
       <button
         disabled={isFirstPage}
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px]"
         onClick={() => changePage(currentPage - 1)}
       >
         Prev
@@ -39,7 +39,7 @@ const Pagination = ({
               return (
                 <button
                   key={pageIndex}
-                  className={`px-2 rounded-sm bg-lamaSky ${
+                  className={`px-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-sm bg-lamaSky ${
                     currentPage === pageIndex ? "text-white" : ""
                   }`}
                   onClick={() => changePage(pageIndex)}
@@ -53,7 +53,7 @@ const Pagination = ({
           <>
             {/* First Page */}
             {(currentPage > 2) && (
-              <button className="px-2 rounded-sm bg-lamaSky" onClick={() => changePage(1)}>1</button>
+              <button className="px-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-sm bg-lamaSky" onClick={() => changePage(1)}>1</button>
             )}
             
             {(currentPage > 3) && <span className="opacity-50">...</span>}
@@ -64,7 +64,7 @@ const Pagination = ({
                 return (
                   <button
                     key={pageIndex}
-                    className={`px-2 rounded-sm bg-lamaSky ${
+                    className={`px-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-sm bg-lamaSky ${
                       currentPage === pageIndex ? "text-white" : ""
                     }`}
                     onClick={() => changePage(pageIndex)}
@@ -81,7 +81,7 @@ const Pagination = ({
             {/* Last Page */}
             {(currentPage < Math.ceil(count / ITEMS_PER_PAGE) - 1) && (
               <button 
-                className="px-2 rounded-sm bg-lamaSky" 
+                className="px-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-sm bg-lamaSky" 
                 onClick={() => changePage(Math.ceil(count / ITEMS_PER_PAGE))}
               >
                 {Math.ceil(count / ITEMS_PER_PAGE)}
@@ -91,7 +91,7 @@ const Pagination = ({
         )}
       </div>
       <button
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px]"
         disabled={isLastPage}
         onClick={() => changePage(currentPage + 1)}
       >

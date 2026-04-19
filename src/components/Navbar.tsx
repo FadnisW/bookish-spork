@@ -88,7 +88,7 @@ const Navbar = async () => {
       {/* Right Side */}
       <div className='flex items-center gap-6 justify-end w-full'>
         {/* Messages */}
-        <div className='bg-white rounded-full w-7 h-7 flex items-center justify-center cursor-pointer'>
+        <div className='bg-white rounded-full w-9 h-9 flex items-center justify-center cursor-pointer'>
           <Image src='/message.png' alt='message' width={20} height={20} />
         </div>
 
@@ -100,7 +100,7 @@ const Navbar = async () => {
             userId={userId}
           />
         ) : (
-          <div className='bg-white rounded-full w-7 h-7 flex items-center justify-center cursor-pointer'>
+          <div className='bg-white rounded-full w-9 h-9 flex items-center justify-center cursor-pointer'>
             <Image src='/announcement.png' alt='notification' width={20} height={20} />
           </div>
         )}
